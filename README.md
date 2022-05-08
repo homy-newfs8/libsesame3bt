@@ -44,9 +44,9 @@ using libsesame3bt::SesameInfo;
 
 void do_unlock_lock() {
 	SesameClient client{};
-	// Get SesameInfo by scan
+	// Use SesameInfo to initialize
 	client.begin(sesameInfo.addr, sesameInfo.model);
-	// or specify bluetooth address directory
+	// or specify bluetooth address and model type directory
 	client.begin(BLEAddress{"***your device address***", BLE_ADDR_RANDOM}, Sesame::model_t::sesame_3);
 
 	client.set_keys(SESAME_PK, SESAME_SECRET);
