@@ -1,37 +1,65 @@
-## Welcome to GitHub Pages
+# libsesame3bt
+ESP32 library to control SESAME 3/4 via Bluetooth LE
 
-You can use the [editor on GitHub](https://github.com/homy-newfs8/libsesame3bt/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+# Usage
+```ini
+[env]
+platform = https://github.com/Jason2866/platform-espressif32.git#v2.0.3-rc1
+framework = arduino
+lib_deps =
+	https://github.com/homy-newfs8/libsesame3bt#0.1.0
+build_flags =
+	-std=gnu++17
+build_unflags =
+	-std=gnu++11
+````
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+# Example
+## Scan
+```C++
+using libsesame3bt::SesameInfo;
+using libsesame3bt::SesameScanner;
 
-### Markdown
+void do_scan() {
+	SesameScanner& scanner = SeameScanner::get();
+	std::vector<SesameInfo> results;
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info)) {
+		results.push_back(*_info);
+	}
+	Serial.printf_P(PSTR("%u devices found\n"), results.size());
+	for (const auto& it : results) {
+		Serial.printf_P(PSTR("%s: %s: model=%u, registered=%u\n"), it.uuid.toString().c_str(), it.address.toString().c_str(),
+		                (unsigned int)it.model, it.flags.registered);
+	}
+}
 
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+## Control
+```C++
+using libsesame3bt::Sesame;
+using libsesame3bt::SesameClient;
+using libsesame3bt::SesameInfo;
 
-### Jekyll Themes
+void do_unlock_lock() {
+	SesameClient client{};
+	// Use SesameInfo to initialize
+	client.begin(sesameInfo.addr, sesameInfo.model);
+	// or specify bluetooth address and model type directory
+	client.begin(BLEAddress{"***your device address***", BLE_ADDR_RANDOM}, Sesame::model_t::sesame_3);
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/homy-newfs8/libsesame3bt/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+	client.set_keys(SESAME_PK, SESAME_SECRET);
+	client.connect();
+	// Wait for connection and authentication done
+	// See example/by_scan/by_scan.cpp for details
+	client.unlick(u8"**TAG**");
+	delay(3000);
+	client.lock(u8"***TAG***");
+}
+```
+# Sample App
+[ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
 
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+# License
+MIT AND Apache-2.0
