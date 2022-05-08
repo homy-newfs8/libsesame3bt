@@ -22,14 +22,14 @@ SESAME 3/4をBluetooth経由で制御するためのESP32用ライブラリ
 - C++17コンパイラの使用が前提となっています。PlatformIO上のESP32向け開発でC++17コンパイラを利用可能にする方法については、ESP32Sesame3Appのplatform.iniを参照願います。
 
 ## 関連リポジトリ
-- [ESP32Sesame3App](公開予定)
+- [ESP32Sesame3App](https://github.com/homy-newfs8/ESP32Sesame3App)
 本ライブラリを使ったアプリケーションサンプル
-- [libsesame3bt-dev](公開予定)
+- [libsesame3bt-dev](https://github.com/homy-newfs8/libsesame3bt-dev)
 本ライブラリの開発用リポジトリ。サンプルファイルの実行等が可能です。
 
 ## 制限事項
 - 本ライブラリはSESAMEデバイスの初期設定を行うことができません。公式アプリで初期設定済みのSESAMEのみ制御可能です。
-- ライブラリのドキュメントはありません。[example](example)フォルダに格納されているサンプルプログラム、サンプルアプリである[ESP32Sesame3App](公開予定)、ライブラリ自体のソースコードを参照願います。
+- ライブラリのドキュメントはありません。[example](example)フォルダに格納されているサンプルプログラム、サンプルアプリである[ESP32Sesame3App](https://github.com/homy-newfs8/ESP32Sesame3App)、ライブラリ自体のソースコードを参照願います。
 
 ## 謝辞
 本ライブラリの開発には[pysesameos2](https://github.com/mochipon/pysesameos2)の成果を大いに参考にさせていただきました。感謝します。
