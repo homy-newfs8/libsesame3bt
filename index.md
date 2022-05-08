@@ -2,6 +2,7 @@
 ESP32 library to control SESAME 3/4 via Bluetooth LE
 
 # Usage
+platformio.ini
 ```ini
 [env]
 platform = https://github.com/Jason2866/platform-espressif32.git#v2.0.3-rc1
