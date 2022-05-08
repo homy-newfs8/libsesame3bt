@@ -58,6 +58,10 @@ void do_unlock_lock() {
 	client.lock(u8"***TAG***");
 }
 ```
+# License
+MIT AND Apache-2.0
+
+Almost all code is licensed under MIT-style license. Files under [src/mbedtls-extra](src/mbedtls-extra) are licensed under Apache-2.0.
 
 # See Also
 [README.ja.md](README.ja.md)
