@@ -1,3 +1,9 @@
 theme: jekyll-theme-slate
 plugins:
   - jekyll-sitemap
+defaults:
+  -
+    scope:
+      path: "google*"
+    values:
+      sitemap: false
