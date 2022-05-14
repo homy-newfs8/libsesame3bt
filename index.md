@@ -62,7 +62,9 @@ void do_unlock_lock() {
 # Sample App
 [ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
 
+<div class="youtube">
 <iframe width="560" height="315" src="https://www.youtube.com/embed/iC5dZ8WWqk4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</div>
 
 # License
 MIT AND Apache-2.0
