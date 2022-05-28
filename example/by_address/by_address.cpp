@@ -89,8 +89,8 @@ loop() {
 			if (last_operated == 0 || millis() - last_operated > 3000) {
 				count++;
 				Serial.println(F("Connecting"));
-				// connectはたまに失敗するようなのでデフォルトでは3回リトライする
-				if (!client.connect(5)) {
+				// connectはたまに失敗するようなので3回リトライする
+				if (!client.connect(3)) {
 					Serial.println(F("Failed to connect, abort"));
 					state = 9999;
 					return;

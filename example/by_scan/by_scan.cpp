@@ -121,8 +121,8 @@ setup() {
 	scan_and_init();
 	client.set_state_callback(state_update);
 	Serial.print(F("Connecting..."));
-	// connectはたまに失敗するようなのでデフォルトでは3回リトライする
-	connected = client.connect();
+	// connectはたまに失敗するようなので3回リトライする
+	connected = client.connect(3);
 	Serial.println(connected ? F("done") : F("failed"));
 }
 
