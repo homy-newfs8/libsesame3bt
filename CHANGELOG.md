@@ -4,12 +4,15 @@
 
 ### Major changes
 
-- `SesameClient::connect(int retry)` default retry count to 0 (was 3).
-- Member `NimBLEAdvertisedDevice& advertisement` added to `SesameInfo` class.
+- SESAME Cycle (SESAME 3 bike) support
 
 ### Minor changes
 
-- Public empty constructor deleted from `SesameInfo` class.
+- `SesameClient::get_model()` added.
+- `SesameClient::connect(int retry)` default retry count to 0 (was 3).
+- SesameClient state transition changed: authenticating -> idle when authentication failure message received (implies disconnect).
+- Member `NimBLEAdvertisedDevice& advertisement` added to `SesameInfo`.
+- Public empty constructor deleted from `SesameInfo` .
 
 ### Environment changes
 

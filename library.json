@@ -1,7 +1,7 @@
 {
 	"name": "libsesame3bt",
-	"version": "0.2.0-dev",
-	"description": "Bluetooth LE access library for CANDY HOUSE Sesame3/4\nNeeds C++17 environment.",
+	"version": "0.2.0",
+	"description": "Bluetooth LE access library for CANDY HOUSE Sesame3 / SESAME 4 / SESAME 3 bike (SESAME Cycle)\nNeeds C++17 environment.",
 	"license": "MIT AND Apache-2.0",
 	"frameworks": "Arduino",
 	"platforms": "espressif32",
