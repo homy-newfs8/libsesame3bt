@@ -24,6 +24,10 @@
 // 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")
 #define SESAME_ADDRESS "**REPLACE**"
 #endif
+#if !defined(SESAME_MODEL)
+// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle)
+#define SESAME_MODEL Sesame::model_t::sesame_3
+#endif
 
 // 64 bytes public key of Sesame
 // 128 bytes hex str
@@ -60,9 +64,8 @@ setup() {
 	// Bluetoothは初期化しておくこと
 	BLEDevice::init("");
 
-	// Bluetoothアドレスと機種コードを設定(Sesame3または4が使用可能)
-	// 今のところ3と4は区別していない
-	if (!client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, Sesame::model_t::sesame_3)) {
+	// Bluetoothアドレスと機種コードを設定(sesame_3, sesame_4, sesame_cycle を指定可能)
+	if (!client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 		Serial.println(F("Failed to begin"));
 		return;
 	}
@@ -108,7 +111,11 @@ loop() {
 					Serial.println(F("Failed to send unlock command"));
 				}
 				last_operated = millis();
-				state = 2;
+				if (client.get_model() == Sesame::model_t::sesame_cycle) {
+					state = 3;
+				} else {
+					state = 2;
+				}
 			}
 			break;
 		case 2:

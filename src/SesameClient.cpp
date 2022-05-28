@@ -91,13 +91,14 @@ SesameClient::create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<uint8_t, 
 
 bool
 SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
-	if (model != Sesame::model_t::sesame_3 && model != Sesame::model_t::sesame_4) {
+	if (model != Sesame::model_t::sesame_3 && model != Sesame::model_t::sesame_4 && model != Sesame::model_t::sesame_cycle) {
 		return false;
 	}
 	if (!static_initialized) {
 		return false;
 	}
 	this->address = address;
+	this->model = model;
 
 	return true;
 }
@@ -174,8 +175,7 @@ SesameClient::connect(int retry) {
 	} else {
 		DEBUG_PRINTLN(F("The device does not have TX or RX chars"));
 	}
-	blec->disconnect();
-	update_state(state_t::idle);
+	disconnect();
 	return false;
 }
 
@@ -505,12 +505,13 @@ void
 SesameClient::handle_response_login() {
 	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::response_login_t)) {
 		DEBUG_PRINTLN(F("short response login message"));
+		disconnect();
 		return;
 	}
 	auto msg = reinterpret_cast<const Sesame::response_login_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
 	if (msg->result != Sesame::result_code_t::success) {
 		DEBUG_PRINTFP(PSTR("%u: login response was not success\n"), static_cast<uint8_t>(msg->result));
-		update_state(state_t::connected);
+		disconnect();
 		return;
 	}
 	update_state(state_t::active);
@@ -534,6 +535,10 @@ SesameClient::unlock(const char* tag) {
 
 bool
 SesameClient::lock(const char* tag) {
+	if (model == Sesame::model_t::sesame_cycle) {
+		DEBUG_PRINTLN(F("SESAME Cycle do not support locking"));
+		return false;
+	}
 	if (!is_session_active()) {
 		DEBUG_PRINTLN(F("Cannot lock while session is not active"));
 		return false;

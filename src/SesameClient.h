@@ -73,6 +73,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	bool is_session_active() const { return state == state_t::active; }
 	void set_status_callback(status_callback_t callback);
 	void set_state_callback(state_callback_t callback);
+	Sesame::model_t get_model() const { return model; }
 
  private:
 	static constexpr size_t MAX_RECV = 40;
@@ -118,6 +119,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	Sesame::mecha_status_t mecha_status{};
 	status_callback_t status_callback = nullptr;
 	state_callback_t state_callback = nullptr;
+	Sesame::model_t model;
 
 	bool is_key_set = false;
 	bool is_key_shared = false;

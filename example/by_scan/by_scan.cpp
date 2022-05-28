@@ -20,6 +20,10 @@
 // 128文字の16進数でSesameの公開鍵(sesame-qr-reader 結果の Public Key)
 #define SESAME_PK "**REPLACE**"
 #endif
+#if !defined(SESAME_MODEL)
+// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle)
+#define SESAME_MODEL Sesame::model_t::sesame_3
+#endif
 
 // 64 bytes public key of Sesame
 // 128 bytes hex str
@@ -60,17 +64,18 @@ scan_and_init() {
 	});
 	Serial.printf_P(PSTR("%u devices found\n"), results.size());
 	for (const auto& it : results) {
-		Serial.printf_P(PSTR("%s: %s: model=%u, registered=%u\n"), it.uuid.toString().c_str(), it.address.toString().c_str(),
+		Serial.printf_P(PSTR("%s: addr = %s, model=%u, registered=%u\n"), it.uuid.toString().c_str(), it.address.toString().c_str(),
 		                (unsigned int)it.model, it.flags.registered);
 	}
-	auto found = std::find_if(results.cbegin(), results.cend(), [](auto& it) {
-		return (it.model == Sesame::model_t::sesame_3 || it.model == Sesame::model_t::sesame_4) && it.flags.registered;
-	});
+	auto found =
+	    std::find_if(results.cbegin(), results.cend(), [](auto& it) { return it.model == SESAME_MODEL && it.flags.registered; });
 	if (found != results.cend()) {
-		Serial.printf_P(PSTR("Using %s (Sesame%d)\n"), found->uuid.toString().c_str(),
-		                found->model == Sesame::model_t::sesame_3 ? 3 : 4);
-		// 最初に見つけた Sesame3/4 で初期化する
-		// 本サンプルでは認証用の鍵と見つかったSesameの組合せ確認は実施していないので、複数のSesame3/4がある環境では接続に失敗することがある
+		Serial.printf_P(PSTR("Using %s (SESAME %s)\n"), found->uuid.toString().c_str(),
+		                found->model == Sesame::model_t::sesame_3   ? "3"
+		                : found->model == Sesame::model_t::sesame_4 ? "4"
+		                                                            : "Cycle");
+		// 最初に見つけた SESAME で初期化する
+		// 本サンプルでは認証用の鍵と見つかったSesameの組合せ確認は実施していないので、複数の SESAME がある環境では接続に失敗することがある
 		if (!client.begin(found->address, found->model)) {
 			Serial.println(F("Failed to begin"));
 			return;
