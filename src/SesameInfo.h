@@ -8,7 +8,7 @@ class SesameInfo {
 	friend class SesameScanner;
 
  public:
-	SesameInfo() {}
+	SesameInfo() = delete;
 	BLEAddress address;
 	Sesame::model_t model = Sesame::model_t::unknown;
 	union flags_t {
@@ -20,10 +20,15 @@ class SesameInfo {
 		flags_t(uint8_t _v) : v(_v) {}
 	} flags{0};
 	BLEUUID uuid;
+	NimBLEAdvertisedDevice& advertizement;
 
  private:
-	SesameInfo(const BLEAddress& _address, Sesame::model_t _model, uint8_t flags_byte, const BLEUUID& _uuid)
-	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid) {}
+	SesameInfo(const BLEAddress& _address,
+	           Sesame::model_t _model,
+	           uint8_t flags_byte,
+	           const BLEUUID& _uuid,
+	           NimBLEAdvertisedDevice* _advertizement)
+	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertizement(*_advertizement) {}
 };
 
 }  // namespace libsesame3bt

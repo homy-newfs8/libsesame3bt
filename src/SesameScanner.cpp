@@ -96,7 +96,7 @@ SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
 			return;
 		}
 	}
-	auto info = SesameInfo(addr, model, static_cast<const uint8_t>(manu_data[4]), BLEUUID{uuid_bin, std::size(uuid_bin), true});
+	auto info = SesameInfo(addr, model, static_cast<const uint8_t>(manu_data[4]), BLEUUID{uuid_bin, std::size(uuid_bin), true}, adv);
 	if (handler) {
 		handler(*this, &info);
 	}
