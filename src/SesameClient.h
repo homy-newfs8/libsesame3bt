@@ -66,7 +66,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	bool begin(const BLEAddress& address, Sesame::model_t model);
 	bool set_keys(const std::array<uint8_t, PK_SIZE>& public_key, const std::array<uint8_t, SECRET_SIZE>& secret_key);
 	bool set_keys(const char* pk_str, const char* secret_str);
-	bool connect(int retry = 3);
+	bool connect(int retry = 0);
 	void disconnect();
 	bool unlock(const char* tag);
 	bool lock(const char* tag);
