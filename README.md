@@ -1,5 +1,5 @@
 # libsesame3bt
-ESP32 library to control SESAME 3 / SESAME 4 / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 3 / SESAME 4 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
 
 # Usage
 platformio.ini
@@ -8,7 +8,7 @@ platformio.ini
 platform = espressif32
 framework = arduino
 lib_deps =
-	https://github.com/homy-newfs8/libsesame3bt#0.2.0
+	https://github.com/homy-newfs8/libsesame3bt#0.3.0
 build_flags =
 	-std=gnu++17
 build_unflags =

@@ -24,21 +24,19 @@ class SesameClient : private NimBLEClientCallbacks {
 		friend class SesameClient;
 
 	 public:
-		/**
-		 * @brief Construct a new Status object
-		 *
-		 */
 		Status() {
 			std::fill(std::begin(setting.data), std::end(setting.data), 0);
 			std::fill(std::begin(status.data), std::end(status.data), 0);
 		}
-		float voltage() const { return status.voltage * 7.2f / 1023; }
-		bool voltage_critical() const { return status.voltage_critical; }
-		bool in_lock() const { return status.in_lock; }
-		bool in_unlock() const { return status.in_unlock; }
-		int16_t position() const { return status.position; }
-		int16_t lock_position() const { return setting.lock_position; }
-		int16_t unlock_position() const { return setting.unlock_position; }
+		float voltage() const {
+			return model == Sesame::model_t::sesame_cycle ? status.lock.voltage * 3.6f / 1023 : status.lock.voltage * 7.2f / 1023;
+		}
+		bool voltage_critical() const { return status.lock.voltage_critical; }
+		bool in_lock() const { return status.lock.in_lock; }
+		bool in_unlock() const { return status.lock.in_unlock; }
+		int16_t position() const { return status.lock.position; }
+		int16_t lock_position() const { return setting.lock.lock_position; }
+		int16_t unlock_position() const { return setting.lock.unlock_position; }
 
 		bool operator==(const Status& that) const {
 			if (&that == this) {
@@ -49,14 +47,52 @@ class SesameClient : private NimBLEClientCallbacks {
 		bool operator!=(const Status& that) const { return !(*this == that); }
 
 	 private:
-		Status(const Sesame::mecha_setting_t& _setting, const Sesame::mecha_status_t& _status) {
+		Status(const Sesame::mecha_setting_t& _setting, const Sesame::mecha_status_t& _status, Sesame::model_t _model) : model(_model) {
+			std::copy(util::cbegin(_setting.data), util::cend(_setting.data), setting.data);
+			std::copy(util::cbegin(_status.data), util::cend(_status.data), status.data);
+		}
+		Sesame::mecha_setting_t setting;
+		Sesame::mecha_status_t status;
+		Sesame::model_t model = Sesame::model_t::unknown;
+	};
+
+	class BotStatus {
+		friend class SesameClient;
+
+	 public:
+		BotStatus() {
+			std::fill(std::begin(setting.data), std::end(setting.data), 0);
+			std::fill(std::begin(status.data), std::end(status.data), 0);
+		}
+		float voltage() const { return status.bot.voltage * 3.6f / 1023; }
+		Sesame::motor_status_t motor_status() const { return status.bot.motor_status; }
+		uint8_t user_pref_dir() const { return setting.bot.user_pref_dir; }
+		uint8_t lock_sec() const { return setting.bot.lock_sec; }
+		uint8_t unlock_sec() const { return setting.bot.unlock_sec; }
+		uint8_t click_lock_sec() const { return setting.bot.click_lock_sec; }
+		uint8_t click_unlock_sec() const { return setting.bot.click_unlock_sec; }
+		uint8_t click_hold_sec() const { return setting.bot.click_hold_sec; }
+		uint8_t button_mode() const { return setting.bot.button_mode; }
+
+		bool operator==(const BotStatus& that) const {
+			if (&that == this) {
+				return true;
+			}
+			return memcmp(&that.setting, &setting, sizeof(setting)) == 0 && memcmp(&that.status, &status, sizeof(status)) == 0;
+		}
+		bool operator!=(const BotStatus& that) const { return !(*this == that); }
+
+	 private:
+		BotStatus(const Sesame::mecha_setting_t& _setting, const Sesame::mecha_status_t& _status) {
 			std::copy(util::cbegin(_setting.data), util::cend(_setting.data), setting.data);
 			std::copy(util::cbegin(_status.data), util::cend(_status.data), status.data);
 		}
 		Sesame::mecha_setting_t setting;
 		Sesame::mecha_status_t status;
 	};
+
 	using status_callback_t = std::function<void(SesameClient& client, SesameClient::Status status)>;
+	using bot_status_callback_t = std::function<void(SesameClient& client, SesameClient::BotStatus status)>;
 	using state_callback_t = std::function<void(SesameClient& client, SesameClient::state_t state)>;
 
 	static constexpr size_t PK_SIZE = 64;
@@ -70,10 +106,13 @@ class SesameClient : private NimBLEClientCallbacks {
 	void disconnect();
 	bool unlock(const char* tag);
 	bool lock(const char* tag);
+	bool click(const char* tag);
 	bool is_session_active() const { return state == state_t::active; }
 	void set_status_callback(status_callback_t callback);
+	void set_bot_status_callback(bot_status_callback_t callback);
 	void set_state_callback(state_callback_t callback);
 	Sesame::model_t get_model() const { return model; }
+	state_t get_state() const { return state; }
 
  private:
 	static constexpr size_t MAX_RECV = 40;
@@ -109,7 +148,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	std::array<uint8_t, 13> enc_iv;
 	std::array<uint8_t, 13> dec_iv;
 	std::array<uint8_t, MAX_RECV> recv_buffer;
-	state_t state = state_t::idle;
+	volatile state_t state = state_t::idle;
 	size_t recv_size = 0;
 	bool skipping = false;
 	NimBLEClient* blec = nullptr;
@@ -117,7 +156,10 @@ class SesameClient : private NimBLEClientCallbacks {
 	NimBLERemoteCharacteristic* rx;
 	Sesame::mecha_setting_t mecha_setting{};
 	Sesame::mecha_status_t mecha_status{};
-	status_callback_t status_callback = nullptr;
+	union {
+		status_callback_t lock_status_callback{};
+		bot_status_callback_t bot_status_callback;
+	};
 	state_callback_t state_callback = nullptr;
 	Sesame::model_t model;
 

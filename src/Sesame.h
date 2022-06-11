@@ -2,12 +2,14 @@
 #include <NimBleDevice.h>
 
 namespace libsesame3bt {
+
 class Sesame {
  public:
 	static constexpr size_t TOKEN_SIZE = 4;
 	static inline const BLEUUID SESAME3_SRV_UUID{"0000fd81-0000-1000-8000-00805f9b34fb"};
 
 	enum class model_t : int8_t { unknown = -1, sesame_3 = 0, wifi_2 = 1, sesame_bot = 2, sesame_cycle = 3, sesame_4 = 4 };
+	enum class __attribute__((packed)) motor_status_t : uint8_t { idle = 0, locking, holding, unlocking };
 	enum class op_code_t : uint8_t {
 		create = 1,
 		read = 2,
@@ -64,7 +66,16 @@ class Sesame {
 		struct __attribute((packed)) {
 			int16_t lock_position;
 			int16_t unlock_position;
-		};
+		} lock;
+		struct __attribute((packed)) {
+			uint8_t user_pref_dir;
+			uint8_t lock_sec;
+			uint8_t unlock_sec;
+			uint8_t click_lock_sec;
+			uint8_t click_hold_sec;
+			uint8_t click_unlock_sec;
+			uint8_t button_mode;
+		} bot;
 		uint8_t data[12];
 	};
 	union __attribute__((packed)) mecha_status_t {
@@ -78,7 +89,12 @@ class Sesame {
 			uint8_t in_unlock : 1;
 			uint8_t unknown2 : 2;
 			bool voltage_critical : 1;
-		};
+		} lock;
+		struct __attribute__((packed)) {
+			uint16_t voltage;
+			uint16_t unknown1;
+			motor_status_t motor_status;
+		} bot;
 		uint8_t data[8];
 	};
 	struct __attribute__((packed)) publish_initial_t {

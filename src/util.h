@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <iterator>
+#include <string>
 
 namespace libsesame3bt {
 namespace util {
@@ -26,6 +27,7 @@ cend(const C& container) -> decltype(std::end(container)) {
 size_t truncate_utf8(const char* str, size_t limit);
 
 int8_t nibble(char c);
+char hexchar(int b, bool upper = false);
 
 template <size_t N>
 bool
@@ -42,6 +44,17 @@ hex2bin(const char* str, std::array<uint8_t, N>& out) {
 		out[i] = (n1 << 4) + n2;
 	}
 	return true;
+}
+
+static std::string
+bin2hex(const uint8_t* data, size_t data_size, bool upper = false) {
+	std::string out(data_size * 2, 0);
+	for (int i = 0; i < data_size; i++) {
+		out[i * 2] = hexchar(data[i] >> 4, upper);
+		out[i * 2 + 1] = hexchar(data[i] & 0x0f, upper);
+	}
+
+	return out;
 }
 
 }  // namespace util

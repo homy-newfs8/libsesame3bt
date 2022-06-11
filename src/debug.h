@@ -19,22 +19,8 @@
 		Serial.printf_P(pstr, __VA_ARGS__); \
 	} while (false)
 
-namespace libsesame3bt {
-namespace debug {
-
-static std::string
-hex(const uint8_t* data, size_t data_size) {
-	std::string out(data_size * 2, 0);
-	for (int i = 0; i < data_size; i++) {
-		sprintf_P(&out[i * 2], PSTR("%02x"), data[i]);
-	}
-	return out;
-}
-
-}  // namespace debug
-}  // namespace libsesame3bt
-
 #else
+
 #define DEBUG_PRINTLN(fstr) \
 	do {                      \
 	} while (false)

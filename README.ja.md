@@ -1,8 +1,8 @@
 # libsesame3bt
-SESAME 3/4/サイクルをBluetooth経由で制御するためのESP32用ライブラリ
+SESAME 3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ライブラリ
 
 ## 概要
-このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 3、SESAME 4、SESAME サイクルを制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
+このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 3、SESAME 4、SESAME bot、SESAME サイクルを制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
 
 - SESAMEのスキャン
 - SESAME状態の受信
@@ -12,6 +12,8 @@ SESAME 3/4/サイクルをBluetooth経由で制御するためのESP32用ライ�
 以下の機種に対応しています。
 - [SESAME 3](https://jp.candyhouse.co/products/sesame3)
 - [SESAME 4](https://jp.candyhouse.co/products/sesame4)
+- [SESAME bot](https://jp.candyhouse.co/products/sesame3-bot)
+- [SESAME サイクル](https://jp.candyhouse.co/products/sesame3-bike)
 
 ## 開発環境
 以下のデバイスで開発しました。

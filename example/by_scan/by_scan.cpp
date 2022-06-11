@@ -21,7 +21,7 @@
 #define SESAME_PK "**REPLACE**"
 #endif
 #if !defined(SESAME_MODEL)
-// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle)
+// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle, sesame_bot)
 #define SESAME_MODEL Sesame::model_t::sesame_3
 #endif
 
@@ -39,7 +39,25 @@ using libsesame3bt::SesameScanner;
 
 SesameClient client{};
 
-// Bluetoothスキャンを実行し、最初に見つけたSesame3またはSesame4向けに初期化を実行する
+static const char*
+model_str(Sesame::model_t model) {
+	switch (model) {
+		case Sesame::model_t::sesame_3:
+			return "SESAME 3";
+		case Sesame::model_t::wifi_2:
+			return "Wi-Fi Module 2";
+		case Sesame::model_t::sesame_bot:
+			return "SESAME bot";
+		case Sesame::model_t::sesame_cycle:
+			return "SESAME Cycle";
+		case Sesame::model_t::sesame_4:
+			return "SESAME 4";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+// Bluetoothスキャンを実行し、最初に見つけたSESAME向けに接続設定を実行する
 void
 scan_and_init() {
 	// SesameScannerはシングルトン
@@ -53,34 +71,29 @@ scan_and_init() {
 	// SesameInfo* の中身はコールバックを抜けると破壊されるので必要ならばコピーしておくこと
 	// スキャンが終了する際には SesameInfo* = nullptr で呼び出される
 	// コールバック中に _scanner.stop() を呼び出すと、そこでスキャンは終了する
-	// スキャン結果には WiFiモジュール2、SesameBotが含まれるが本ライブラリでは対応していない
+	// スキャン結果には WiFiモジュール2が含まれるが本ライブラリでは対応していない
 	// 非同期スキャンを実行する SesameScanner::scan_async()もある
 	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info) {
 		if (_info) {  // nullptrの検査を実施
 			// 結果をコピーして results vector に格納する
+			Serial.printf_P(PSTR("model=%s,addr=%s,UUID=%s,registered=%u\n"), model_str(_info->model), _info->address.toString().c_str(),
+			                _info->uuid.toString().c_str(), _info->flags.registered);
 			results.push_back(*_info);
 		}
 		// _scanner.stop(); // スキャンを停止させたくなったらstop()を呼び出す
 	});
 	Serial.printf_P(PSTR("%u devices found\n"), results.size());
-	for (const auto& it : results) {
-		Serial.printf_P(PSTR("%s: addr = %s, model=%u, registered=%u\n"), it.uuid.toString().c_str(), it.address.toString().c_str(),
-		                (unsigned int)it.model, it.flags.registered);
-	}
 	auto found =
 	    std::find_if(results.cbegin(), results.cend(), [](auto& it) { return it.model == SESAME_MODEL && it.flags.registered; });
 	if (found != results.cend()) {
-		Serial.printf_P(PSTR("Using %s (SESAME %s)\n"), found->uuid.toString().c_str(),
-		                found->model == Sesame::model_t::sesame_3   ? "3"
-		                : found->model == Sesame::model_t::sesame_4 ? "4"
-		                                                            : "Cycle");
-		// 最初に見つけた SESAME で初期化する
-		// 本サンプルでは認証用の鍵と見つかったSesameの組合せ確認は実施していないので、複数の SESAME がある環境では接続に失敗することがある
+		Serial.printf_P(PSTR("Using %s (%s)\n"), found->uuid.toString().c_str(), model_str(found->model));
+		// 最初に見つけた SESAME_MODEL のデバイスに接続する
+		// 本サンプルでは認証用の鍵と見つかったSESAMEの組合せ確認は実施していないので、複数のSESAMEがある環境では接続に失敗することがある
 		if (!client.begin(found->address, found->model)) {
 			Serial.println(F("Failed to begin"));
 			return;
 		}
-		// Sesameの鍵情報を設定
+		// SESAMEの鍵情報を設定
 		if (!client.set_keys(sesame_pk, sesame_sec)) {
 			Serial.println(F("Failed to set keys"));
 		}
@@ -123,11 +136,14 @@ setup() {
 	// Bluetoothは初期化しておくこと
 	BLEDevice::init("");
 
+	// Bluetoothスキャンと接続設定
 	scan_and_init();
 	client.set_state_callback(state_update);
-	Serial.print(F("Connecting..."));
+
 	// connectはたまに失敗するようなので3回リトライする
+	Serial.print(F("Connecting..."));
 	connected = client.connect(3);
+
 	Serial.println(connected ? F("done") : F("failed"));
 }
 
@@ -140,6 +156,13 @@ loop() {
 		delay(1000);
 		return;
 	}
+	// 接続完了後に idle に遷移するのは認証エラーや切断が発生した場合(接続からやり直す必要がある)
+	if (sesame_state == SesameClient::state_t::idle) {
+		Serial.println(F("Failed to operate"));
+		connected = false;
+		// このサンプルではリトライは実装していない
+		return;
+	}
 	// 認証完了してSesameを制御可能になるまで待つ
 	if (sesame_state != SesameClient::state_t::active) {
 		delay(100);
@@ -150,6 +173,7 @@ loop() {
 		client.unlock(u8"ラベルは21バイトに収まるよう(勝手に切ります)");
 		client.disconnect();
 		Serial.println(F("Disconnected"));
+		connected = false;
 	}
 	delay(1000);
 }

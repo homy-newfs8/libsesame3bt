@@ -33,5 +33,16 @@ nibble(char c) {
 	return -1;
 }
 
+char
+hexchar(int b, bool upper) {
+	if (b >= 0 && b <= 9) {
+		return '0' + b;
+	}
+	if (b >= 10 && b <= 15) {
+		return (upper ? 'A' : 'a') + (b - 10);
+	}
+	return 0;
+}
+
 }  // namespace util
 }  // namespace libsesame3bt

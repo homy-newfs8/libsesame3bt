@@ -1,6 +1,6 @@
 ﻿/*
  * libasesame3btサンプル
- * SesameのBluetoothアドレスがわかっている場合
+ * SESAME botのBluetoothアドレスがわかっている場合
  */
 #include <Arduino.h>
 #include <Sesame.h>
@@ -25,8 +25,8 @@
 #define SESAME_ADDRESS "**REPLACE**"
 #endif
 #if !defined(SESAME_MODEL)
-// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle)
-#define SESAME_MODEL Sesame::model_t::sesame_3
+// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle, sesame_bot)
+#define SESAME_MODEL Sesame::model_t::sesame_bot
 #endif
 
 // 64 bytes public key of Sesame
@@ -40,19 +40,36 @@ using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
 
 SesameClient client{};
-SesameClient::Status last_status{};
+SesameClient::BotStatus last_status{};
 SesameClient::state_t sesame_state;
 
-// Sesameの状態通知コールバック
-// Sesameのつまみの位置、電圧、施錠開錠状態が通知される
-// Sesameからの通知がある毎に呼び出される(変化がある場合のみ通知されている模様)
-// Sesameの設定変更があった場合も呼び出される(はずだが、今のところ動作していない)
+static const char*
+motor_status_str(Sesame::motor_status_t status) {
+	switch (status) {
+		case Sesame::motor_status_t::idle:
+			return "idle";
+		case Sesame::motor_status_t::locking:
+			return "locking";
+		case Sesame::motor_status_t::holding:
+			return "holding";
+		case Sesame::motor_status_t::unlocking:
+			return "unlocking";
+		default:
+			return "UNKNOWN";
+	}
+}
+
+// SESAME botの状態通知コールバック
+// 鍵系のSESAMEとはコールバックに渡される引数が異なりる
+// Sesameからの通知がある毎に呼び出される
 void
-status_update(SesameClient& client, SesameClient::Status status) {
+status_update(SesameClient& client, SesameClient::BotStatus status) {
 	if (status != last_status) {
-		Serial.printf_P(PSTR("Setting lock=%d,unlock=%d\n"), status.lock_position(), status.unlock_position());
-		Serial.printf_P(PSTR("Status in_lock=%u,in_unlock=%u,pos=%d,volt=%.2f,volt_crit=%u\n"), status.in_lock(), status.in_unlock(),
-		                status.position(), status.voltage(), status.voltage_critical());
+		Serial.printf_P(
+		    PSTR("Setting dir=%u,lock_sec=%u,unlock_sec=%u,click_lock_sec=%u,click_hold_sec=%u,click_unlock_sec=%u,button_mode=%u\n"),
+		    status.user_pref_dir(), status.lock_sec(), status.unlock_sec(), status.click_lock_sec(), status.click_hold_sec(),
+		    status.click_unlock_sec(), status.button_mode());
+		Serial.printf_P(PSTR("Status volt=%.2f,motor_status=%s\n"), status.voltage(), motor_status_str(status.motor_status()));
 		last_status = status;
 	}
 }
@@ -76,9 +93,8 @@ setup() {
 	}
 	// SesameClient状態コールバックを設定
 	client.set_state_callback([](auto& client, auto state) { sesame_state = state; });
-	// Sesame状態コールバックを設定
-	// (SESAME botは異なる呼び出しが必要。by_address_botを参照)
-	client.set_status_callback(status_update);
+	// SesameBot状態コールバックを設定(鍵系とは呼び出すメソッドが異なる)
+	client.set_bot_status_callback(status_update);
 }
 
 static uint32_t last_operated = 0;
@@ -132,7 +148,7 @@ loop() {
 					Serial.println(F("Failed to send lock command"));
 				}
 				last_operated = millis();
-				state = 3;
+				state = 9999;
 			}
 			break;
 		case 3:

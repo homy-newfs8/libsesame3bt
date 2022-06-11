@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.3.0] 2022-06-11
+
+### Major changes
+
+- SESAME bot support.
+- (use `SesameClient::set_bot_status_callback()` to set callback)
+
+### Minor changes
+
+- `SesameClient::get_state()` added.
+
 ## [0.2.0] 2022-05-20
 
 ### Major changes

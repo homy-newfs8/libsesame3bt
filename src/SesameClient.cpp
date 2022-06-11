@@ -91,7 +91,8 @@ SesameClient::create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<uint8_t, 
 
 bool
 SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
-	if (model != Sesame::model_t::sesame_3 && model != Sesame::model_t::sesame_4 && model != Sesame::model_t::sesame_cycle) {
+	if (model != Sesame::model_t::sesame_3 && model != Sesame::model_t::sesame_4 && model != Sesame::model_t::sesame_cycle &&
+	    model != Sesame::model_t::sesame_bot) {
 		return false;
 	}
 	if (!static_initialized) {
@@ -161,7 +162,6 @@ SesameClient::connect(int retry) {
 		}
 		delay(500);
 	}
-	update_state(state_t::idle);
 	auto srv = blec->getService(Sesame::SESAME3_SRV_UUID);
 	if (srv && (tx = srv->getCharacteristic(TxUUID)) && (rx = srv->getCharacteristic(RxUUID))) {
 		if (rx->subscribe(true, [this](NimBLERemoteCharacteristic* ch, uint8_t* data, size_t size, bool isNotify) {
@@ -441,6 +441,7 @@ void
 SesameClient::handle_publish_initial() {
 	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_initial_t)) {
 		DEBUG_PRINTF("%u: short response initial data\n", recv_size);
+		disconnect();
 		return;
 	}
 	reset_session();
@@ -450,16 +451,19 @@ SesameClient::handle_publish_initial() {
 	int mbrc;
 	if ((mbrc = mbedtls_ctr_drbg_random(&rng_ctx, local_tok.data(), local_tok.size())) != 0) {
 		DEBUG_PRINTFP(PSTR("%d: drbg_random failed\n"), mbrc);
+		disconnect();
 		return;
 	}
 
 	std::array<uint8_t, 1 + PK_SIZE> bpk;
 	if (!generate_session_key(local_tok, msg->token, bpk)) {
+		disconnect();
 		return;
 	}
 	init_endec_iv(local_tok, msg->token);
 	std::array<uint8_t, AES_BLOCK_SIZE> tag_response;
 	if (!generate_tag_response(bpk, local_tok, msg->token, tag_response)) {
+		disconnect();
 		return;
 	}
 
@@ -473,6 +477,8 @@ SesameClient::handle_publish_initial() {
 
 	if (send_command(Sesame::op_code_t::sync, Sesame::item_code_t::login, resp.data(), resp.size(), false)) {
 		update_state(state_t::authenticating);
+	} else {
+		disconnect();
 	}
 }
 
@@ -503,6 +509,7 @@ SesameClient::update_mecha_status(const Sesame::mecha_status_t& status) {
 
 void
 SesameClient::handle_response_login() {
+	DEBUG_PRINTLN(F("debug:login"));
 	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::response_login_t)) {
 		DEBUG_PRINTLN(F("short response login message"));
 		disconnect();
@@ -523,7 +530,7 @@ SesameClient::handle_response_login() {
 bool
 SesameClient::unlock(const char* tag) {
 	if (!is_session_active()) {
-		DEBUG_PRINTLN(F("Cannot unlock while session is not active"));
+		DEBUG_PRINTLN(F("Cannot operate while session is not active"));
 		return false;
 	}
 	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
@@ -540,13 +547,30 @@ SesameClient::lock(const char* tag) {
 		return false;
 	}
 	if (!is_session_active()) {
-		DEBUG_PRINTLN(F("Cannot lock while session is not active"));
+		DEBUG_PRINTLN(F("Cannot operate while session is not active"));
 		return false;
 	}
 	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
 	tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE);
 	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
 	return send_command(Sesame::op_code_t::async, Sesame::item_code_t::lock, reinterpret_cast<const uint8_t*>(tagbytes.data()),
+	                    tagbytes.size(), true);
+}
+
+bool
+SesameClient::click(const char* tag) {
+	if (model != Sesame::model_t::sesame_bot) {
+		DEBUG_PRINTLN(F("click is supported only on SESAME bot"));
+		return false;
+	}
+	if (!is_session_active()) {
+		DEBUG_PRINTLN(F("Cannot operate while session is not active"));
+		return false;
+	}
+	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
+	tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE);
+	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
+	return send_command(Sesame::op_code_t::async, Sesame::item_code_t::click, reinterpret_cast<const uint8_t*>(tagbytes.data()),
 	                    tagbytes.size(), true);
 }
 
@@ -574,15 +598,35 @@ SesameClient::handle_publish_mecha_status() {
 
 void
 SesameClient::fire_status_callback() {
-	if (status_callback) {
-		status_callback(*this, Status(mecha_setting, mecha_status));
+	if (model == Sesame::model_t::sesame_bot) {
+		if (bot_status_callback) {
+			bot_status_callback(*this, BotStatus(mecha_setting, mecha_status));
+		}
+	} else {
+		if (lock_status_callback) {
+			lock_status_callback(*this, Status(mecha_setting, mecha_status, model));
+		}
 	}
 }
 
 void
 SesameClient::set_status_callback(status_callback_t callback) {
-	status_callback = callback;
+	if (model == Sesame::model_t::sesame_bot) {
+		DEBUG_PRINTLN(F("Do not use this method for SESAME bot"));
+		return;
+	}
+	lock_status_callback = callback;
 }
+
+void
+SesameClient::set_bot_status_callback(bot_status_callback_t callback) {
+	if (model != Sesame::model_t::sesame_bot) {
+		DEBUG_PRINTLN(F("Use this method only for SESAME bot"));
+		return;
+	}
+	bot_status_callback = callback;
+}
+
 void
 SesameClient::set_state_callback(state_callback_t callback) {
 	state_callback = callback;
@@ -590,7 +634,10 @@ SesameClient::set_state_callback(state_callback_t callback) {
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient) {
-	disconnect();
+	if (state != state_t::idle) {
+		DEBUG_PRINTLN(F("Bluetooth disconnected by peer"));
+		disconnect();
+	}
 }
 
 }  // namespace libsesame3bt
