@@ -1,5 +1,6 @@
 #pragma once
 #include <NimBleDevice.h>
+#include <cstddef>
 
 namespace libsesame3bt {
 
@@ -67,7 +68,7 @@ class Sesame {
 			int16_t lock_position;
 			int16_t unlock_position;
 		} lock;
-		struct __attribute((packed)) {
+		struct __attribute__((packed)) {
 			uint8_t user_pref_dir;
 			uint8_t lock_sec;
 			uint8_t unlock_sec;
@@ -76,7 +77,7 @@ class Sesame {
 			uint8_t click_unlock_sec;
 			uint8_t button_mode;
 		} bot;
-		uint8_t data[12];
+		std::byte data[12];
 	};
 	union __attribute__((packed)) mecha_status_t {
 		struct __attribute__((packed)) {
@@ -95,10 +96,10 @@ class Sesame {
 			uint16_t unknown1;
 			motor_status_t motor_status;
 		} bot;
-		uint8_t data[8];
+		std::byte data[8];
 	};
 	struct __attribute__((packed)) publish_initial_t {
-		uint8_t token[TOKEN_SIZE];
+		std::byte token[TOKEN_SIZE];
 	};
 	struct __attribute__((packed)) message_header_t {
 		op_code_t op_code;
@@ -114,7 +115,7 @@ class Sesame {
 		uint8_t op_code_2;
 		result_code_t result;
 		uint32_t timestamp;
-		uint8_t _unknown[4];
+		std::byte _unknown[4];
 		mecha_setting_t mecha_setting;
 		mecha_status_t mecha_status;
 	};
