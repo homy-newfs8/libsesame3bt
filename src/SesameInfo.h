@@ -1,5 +1,6 @@
 #pragma once
 #include <NimBLEDevice.h>
+#include <cstddef>
 #include <string>
 #include "Sesame.h"
 namespace libsesame3bt {
@@ -16,16 +17,16 @@ class SesameInfo {
 			bool registered : 1;
 			bool unused : 7;
 		};
-		uint8_t v;
-		flags_t(uint8_t _v) : v(_v) {}
-	} flags{0};
+		std::byte v;
+		flags_t(std::byte _v) : v(_v) {}
+	} flags;
 	BLEUUID uuid;
 	NimBLEAdvertisedDevice& advertizement;
 
  private:
 	SesameInfo(const BLEAddress& _address,
 	           Sesame::model_t _model,
-	           uint8_t flags_byte,
+	           std::byte flags_byte,
 	           const BLEUUID& _uuid,
 	           NimBLEAdvertisedDevice* _advertizement)
 	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertizement(*_advertizement) {}

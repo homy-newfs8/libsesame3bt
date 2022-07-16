@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.4.0] 2022-07-16
+
+### Major changes
+
+- Use std::byte instead of uint8_t, some public interfaces are affected.
+
 ## [0.3.0] 2022-06-11
 
 ### Major changes
