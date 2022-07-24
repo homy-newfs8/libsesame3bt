@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.0] 2022-XX-XX
+
+### Major changes
+
+- SesameClient::Status::battery_pct(), SesameClient::BotStatus::battery_pct() added.
+
 ## [0.4.0] 2022-07-16
 
 ### Major changes

@@ -38,6 +38,7 @@ class SesameClient : private NimBLEClientCallbacks {
 		int16_t position() const { return status.lock.position; }
 		int16_t lock_position() const { return setting.lock.lock_position; }
 		int16_t unlock_position() const { return setting.lock.unlock_position; }
+		float battery_pct() const { return voltage_to_pct(voltage()); }
 
 		bool operator==(const Status& that) const {
 			if (&that == this) {
@@ -46,6 +47,7 @@ class SesameClient : private NimBLEClientCallbacks {
 			return memcmp(&that.setting, &setting, sizeof(setting)) == 0 && memcmp(&that.status, &status, sizeof(status)) == 0;
 		}
 		bool operator!=(const Status& that) const { return !(*this == that); }
+		static float voltage_to_pct(float voltage);
 
 	 private:
 		Status(const Sesame::mecha_setting_t& _setting, const Sesame::mecha_status_t& _status, Sesame::model_t _model) : model(_model) {
@@ -55,6 +57,13 @@ class SesameClient : private NimBLEClientCallbacks {
 		Sesame::mecha_setting_t setting;
 		Sesame::mecha_status_t status;
 		Sesame::model_t model = Sesame::model_t::unknown;
+
+		struct BatteryTable {
+			float voltage;
+			float pct;
+		};
+		static inline const BatteryTable batt_tbl[] = {{6.0f, 100.0f}, {5.8f, 50.0f}, {5.7f, 40.0f}, {5.6f, 32.0f}, {5.4f, 21.0f},
+		                                               {5.2f, 13.0f},  {5.1f, 10.0f}, {5.0f, 7.0f},  {4.8f, 3.0f},  {4.6f, 0.0f}};
 	};
 
 	class BotStatus {
@@ -74,6 +83,7 @@ class SesameClient : private NimBLEClientCallbacks {
 		uint8_t click_unlock_sec() const { return setting.bot.click_unlock_sec; }
 		uint8_t click_hold_sec() const { return setting.bot.click_hold_sec; }
 		uint8_t button_mode() const { return setting.bot.button_mode; }
+		float battery_pct() const { return Status::voltage_to_pct(voltage() * 2.0f); }
 
 		bool operator==(const BotStatus& that) const {
 			if (&that == this) {

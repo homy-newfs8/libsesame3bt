@@ -664,4 +664,22 @@ SesameClient::onDisconnect(NimBLEClient* pClient) {
 	}
 }
 
+float
+SesameClient::Status::voltage_to_pct(float voltage) {
+	if (voltage >= batt_tbl[0].voltage) {
+		return batt_tbl[0].pct;
+	}
+	if (voltage <= batt_tbl[std::size(batt_tbl) - 1].voltage) {
+		return batt_tbl[std::size(batt_tbl) - 1].pct;
+	}
+	for (auto i = 1; i < std::size(batt_tbl); i++) {
+		if (voltage >= batt_tbl[i].voltage) {
+			return (voltage - batt_tbl[i].voltage) / (batt_tbl[i - 1].voltage - batt_tbl[i].voltage) *
+			           (batt_tbl[i - 1].pct - batt_tbl[i].pct) +
+			       batt_tbl[i].pct;
+		}
+	}
+	return 0.0f;  // Never reach
+}
+
 }  // namespace libsesame3bt
