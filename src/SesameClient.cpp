@@ -22,7 +22,6 @@ constexpr size_t AUTH_TAG_TRUNCATED_SIZE = 4;
 constexpr size_t KEY_INDEX_SIZE = 2;
 constexpr size_t ADD_DATA_SIZE = 1;
 constexpr size_t TOKEN_SIZE = Sesame::TOKEN_SIZE;
-constexpr size_t MAX_CMD_TAG_SIZE = 21;
 constexpr size_t IV_COUNTER_SIZE = 5;
 
 template <size_t N>

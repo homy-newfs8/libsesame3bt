@@ -21,6 +21,8 @@ namespace libsesame3bt {
 class SesameClient : private NimBLEClientCallbacks {
  public:
 	enum class state_t : uint8_t { idle, connected, authenticating, active };
+	static constexpr size_t MAX_CMD_TAG_SIZE = 21;
+
 	class Status {
 		friend class SesameClient;
 

@@ -26,7 +26,7 @@ cend(const C& container) -> decltype(std::end(container)) {
 }
 
 size_t truncate_utf8(const char* str, size_t limit);
-
+size_t truncate_utf8(const char* str, size_t len, size_t limit);
 int8_t nibble(char c);
 char hexchar(int b, bool upper = false);
 

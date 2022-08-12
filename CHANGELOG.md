@@ -4,7 +4,12 @@
 
 ### Major changes
 
-- SesameClient::Status::battery_pct(), SesameClient::BotStatus::battery_pct() added.
+- `SesameClient::Status::battery_pct()`, `SesameClient::BotStatus::battery_pct()` added.
+
+### Minor changes
+
+- constant `SesameClient::MAX_CMD_TAG_SIZE` moved to public.
+- `util::truncate_utf8()` for not-null-terminated string added.
 
 ## [0.4.0] 2022-07-16
 

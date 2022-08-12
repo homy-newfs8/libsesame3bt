@@ -6,10 +6,20 @@ namespace util {
 
 size_t
 truncate_utf8(const char* str, size_t limit) {
-	if (str == nullptr || limit == 0) {
+	if (!str) {
 		return 0;
 	}
-	size_t len = strnlen(str, limit + 1);
+	return truncate_utf8(str, std::strlen(str), limit);
+}
+
+size_t
+truncate_utf8(const char* str, size_t len, size_t limit) {
+	if (!str || len == 0 || limit == 0) {
+		return 0;
+	}
+	if (len > limit) {
+		len = limit + 1;
+	}
 	while (len > limit) {
 		len--;
 		while (len > 0 && (str[len] & 0xc0) == 0x80) {
