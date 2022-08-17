@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.1] 2022-08-17
+
+- Change version specifier for base64 library to 1.2.1.
+
 ## [0.4.0] 2022-07-16
 
 ### Major changes
