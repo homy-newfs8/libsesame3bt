@@ -10,13 +10,13 @@
 	do {                    \
 		Serial.print(fstr);   \
 	} while (false)
-#define DEBUG_PRINTF(str, ...)       \
-	do {                               \
-		Serial.printf(str, __VA_ARGS__); \
+#define DEBUG_PRINTF(...)       \
+	do {                          \
+		Serial.printf(__VA_ARGS__); \
 	} while (false)
-#define DEBUG_PRINTFP(pstr, ...)        \
-	do {                                  \
-		Serial.printf_P(pstr, __VA_ARGS__); \
+#define DEBUG_PRINTFP(...)        \
+	do {                            \
+		Serial.printf_P(__VA_ARGS__); \
 	} while (false)
 
 #else
@@ -27,11 +27,11 @@
 #define DEBUG_PRINT(fstr) \
 	do {                    \
 	} while (false)
-#define DEBUG_PRINTF(pstr, ...) \
-	do {                          \
+#define DEBUG_PRINTF(...) \
+	do {                    \
 	} while (false)
-#define DEBUG_PRINTFP(pstr, ...) \
-	do {                           \
+#define DEBUG_PRINTFP(...) \
+	do {                     \
 	} while (false)
 
 #endif

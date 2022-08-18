@@ -1,8 +1,8 @@
 #include "SesameScanner.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
+#include <mbedtls/base64.h>
 #include "Sesame.h"
-#include "libbase64-arduino/libbase64.h"
 #include "util.h"
 
 #ifndef LIBSESAME3BT_DEBUG
@@ -82,16 +82,16 @@ SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
 		          std::copy(util::cbegin(WIFI_MODULE_UUID_HEAD), util::cend(WIFI_MODULE_UUID_HEAD), uuid_bin));
 	} else {
 		auto name = adv->getName();
-		if (name.empty() || name.length() != 22) {
+		if (name.length() != 22) {
 			DEBUG_PRINTFP(PSTR("%u: %s: Unexpected name field length, ignore this device\n"), manu_data[2], addr.toString().c_str());
 			return;
 		}
-		size_t idlen = decode_base64_length(reinterpret_cast<uint8_t*>(&name[0]), name.length());
-		if (idlen != 16) {
-			DEBUG_PRINTFP(PSTR("%s: Unexpected name format, ignore this device\n"), addr.toString().c_str());
-			return;
-		}
-		if (decode_base64((uint8_t*)name.data(), name.length(), uuid_bin) != std::size(uuid_bin)) {
+		uint8_t fixed_name[22 + 2];
+		std::copy(name.cbegin(), name.cend(), fixed_name);
+		fixed_name[22] = fixed_name[23] = '=';  // not nul terminated
+		size_t idlen;
+		int rc = mbedtls_base64_decode(uuid_bin, sizeof(uuid_bin), &idlen, fixed_name, sizeof(fixed_name));
+		if (rc != 0 || idlen != sizeof(uuid_bin)) {
 			DEBUG_PRINTFP(PSTR("%s: Unexpected name format, ignore this device\n"), addr.toString().c_str());
 			return;
 		}
