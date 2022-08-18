@@ -14,10 +14,6 @@
 	do {                          \
 		Serial.printf(__VA_ARGS__); \
 	} while (false)
-#define DEBUG_PRINTFP(...)        \
-	do {                            \
-		Serial.printf_P(__VA_ARGS__); \
-	} while (false)
 
 #else
 
@@ -29,9 +25,6 @@
 	} while (false)
 #define DEBUG_PRINTF(...) \
 	do {                    \
-	} while (false)
-#define DEBUG_PRINTFP(...) \
-	do {                     \
 	} while (false)
 
 #endif
