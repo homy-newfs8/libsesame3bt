@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.5.0] 2022-XX-XX
+## [0.5.0] 2022-09-10
 
 ### Major changes
 
