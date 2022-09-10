@@ -10,7 +10,7 @@ class Sesame {
 	static inline const BLEUUID SESAME3_SRV_UUID{"0000fd81-0000-1000-8000-00805f9b34fb"};
 
 	enum class model_t : int8_t { unknown = -1, sesame_3 = 0, wifi_2 = 1, sesame_bot = 2, sesame_cycle = 3, sesame_4 = 4 };
-	enum class __attribute__((packed)) motor_status_t : uint8_t { idle = 0, locking, holding, unlocking };
+	enum class motor_status_t : uint8_t { idle = 0, locking, holding, unlocking };
 	enum class op_code_t : uint8_t {
 		create = 1,
 		read = 2,
