@@ -28,9 +28,9 @@ void do_scan() {
 	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info)) {
 		results.push_back(*_info);
 	}
-	Serial.printf_P(PSTR("%u devices found\n"), results.size());
+	Serial.printf("%u devices found\n", results.size());
 	for (const auto& it : results) {
-		Serial.printf_P(PSTR("%s: %s: model=%u, registered=%u\n"), it.uuid.toString().c_str(), it.address.toString().c_str(),
+		Serial.printf("%s: %s: model=%u, registered=%u\n", it.uuid.toString().c_str(), it.address.toString().c_str(),
 		                (unsigned int)it.model, it.flags.registered);
 	}
 }
