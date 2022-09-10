@@ -54,7 +54,7 @@ void do_unlock_lock() {
 	client.connect();
 	// Wait for connection and authentication done
 	// See example/by_scan/by_scan.cpp for details
-	client.unlick(u8"**TAG**");
+	client.unlock(u8"**TAG**");
 	delay(3000);
 	client.lock(u8"***TAG***");
 }
