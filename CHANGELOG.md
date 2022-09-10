@@ -4,7 +4,9 @@
 
 ### Major changes
 
+- Fix fatal error on `SesameClient::disconnect()`.
 - `SesameClient::Status::battery_pct()`, `SesameClient::BotStatus::battery_pct()` added.
+- Delete internal `NimBLEClient` object on `SesameClient::disconnect()`. You can re-initialize NimBLE stack while disconnected.
 
 ### Minor changes
 

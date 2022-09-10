@@ -2,8 +2,28 @@
 #include <unity.h>
 #include "SesameClient.h"
 #include "util.h"
+#if __has_include("mysesame-config.h")
+#include "mysesame-config.h"
+#endif
+
+#if !defined(SESAME_SECRET)
+#define SESAME_SECRET "**REPLACE**"
+#endif
+#if !defined(SESAME_PK)
+#define SESAME_PK "**REPLACE**"
+#endif
+#if !defined(SESAME_ADDRESS)
+#define SESAME_ADDRESS "**REPLACE**"
+#endif
+#if !defined(SESAME_MODEL)
+#define SESAME_MODEL Sesame::model_t::sesame_3
+#endif
+
+#define TEST_UTILITY 1
+#define TEST_BLE 1
 
 namespace util = libsesame3bt::util;
+using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
 
 void
@@ -55,13 +75,61 @@ test_vol_pct() {
 }
 
 void
+test_restart_while_disconnected() {
+	NimBLEDevice::init("");
+	SesameClient client{};
+	client.set_keys(SESAME_PK, SESAME_SECRET);
+	client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL);
+	int testcount = 0;
+	do {
+		bool rc = false;
+		Serial.println("connecting");
+		for (int i = 0; i < 5; i++) {
+			if (client.connect()) {
+				rc = true;
+				break;
+			}
+			delay(300);
+		}
+		if (!rc) {
+			TEST_FAIL_MESSAGE("Failed to connect to sesame, abort");
+			return;
+		}
+		Serial.println("authenticating");
+		uint32_t begin = millis();
+		rc = false;
+		while (!client.is_session_active()) {
+			if (millis() - begin > 5'000) {
+				TEST_FAIL_MESSAGE("Authentication not finished in 5sec, abort");
+				return;
+			}
+			delay(10);
+		}
+		Serial.println("disconnecting");
+		client.disconnect();
+		Serial.println("deiniting");
+		NimBLEDevice::deinit(true);
+		Serial.println("initing");
+		NimBLEDevice::init("");
+	} while (testcount++ < 3);
+	TEST_PASS();
+}
+
+void
 setup() {
+	Serial.begin(115200);
 	delay(3000);
 	UNITY_BEGIN();
+#if TEST_UTILITY
 	RUN_TEST(test_truncate_utf8);
 	RUN_TEST(test_vol_pct);
+#endif
+#if TEST_BLE
+	RUN_TEST(test_restart_while_disconnected);
+#endif
 	UNITY_END();
 }
+
 void
 loop() {
 	delay(100);

@@ -64,6 +64,7 @@ SesameClient::SesameClient() {}
 
 SesameClient::~SesameClient() {
 	if (blec) {
+		blec->setClientCallbacks(nullptr, true);
 		NimBLEDevice::deleteClient(blec);
 	}
 }
@@ -79,7 +80,10 @@ SesameClient::disconnect() {
 	if (!blec) {
 		return;
 	}
-	blec->disconnect();
+	// prevent disconnect callback loop
+	blec->setClientCallbacks(nullptr, false);
+	NimBLEDevice::deleteClient(blec);
+	blec = nullptr;
 	reset_session();
 	update_state(state_t::idle);
 }
