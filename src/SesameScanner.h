@@ -22,9 +22,8 @@ class SesameScanner : private NimBLEAdvertisedDeviceCallbacks {
 
  private:
 	friend void scan_completed_handler(NimBLEScanResults);
-	static SesameScanner* current_scanner;
-	NimBLEScan* scanner;
-	scan_handler_t handler;
+	NimBLEScan* scanner{};
+	scan_handler_t handler{};
 
 	void scan_completed(NimBLEScanResults results);
 	void scan_internal(uint32_t scan_duration);

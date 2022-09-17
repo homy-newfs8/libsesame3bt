@@ -77,7 +77,7 @@ class Sesame {
 			uint8_t click_unlock_sec;
 			uint8_t button_mode;
 		} bot;
-		std::byte data[12];
+		std::byte data[12]{};
 	};
 	union __attribute__((packed)) mecha_status_t {
 		struct __attribute__((packed)) {
@@ -96,7 +96,7 @@ class Sesame {
 			uint16_t unknown1;
 			motor_status_t motor_status;
 		} bot;
-		std::byte data[8];
+		std::byte data[8]{};
 	};
 	struct __attribute__((packed)) publish_initial_t {
 		std::byte token[TOKEN_SIZE];

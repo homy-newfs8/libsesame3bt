@@ -56,8 +56,8 @@ class SesameClient : private NimBLEClientCallbacks {
 			std::copy(util::cbegin(_setting.data), util::cend(_setting.data), setting.data);
 			std::copy(util::cbegin(_status.data), util::cend(_status.data), status.data);
 		}
-		Sesame::mecha_setting_t setting;
-		Sesame::mecha_status_t status;
+		Sesame::mecha_setting_t setting{};
+		Sesame::mecha_status_t status{};
 		Sesame::model_t model = Sesame::model_t::unknown;
 
 		struct BatteryTable {
@@ -100,8 +100,8 @@ class SesameClient : private NimBLEClientCallbacks {
 			std::copy(util::cbegin(_setting.data), util::cend(_setting.data), setting.data);
 			std::copy(util::cbegin(_status.data), util::cend(_status.data), status.data);
 		}
-		Sesame::mecha_setting_t setting;
-		Sesame::mecha_status_t status;
+		Sesame::mecha_setting_t setting{};
+		Sesame::mecha_status_t status{};
 	};
 
 	using status_callback_t = std::function<void(SesameClient& client, SesameClient::Status status)>;
@@ -111,6 +111,8 @@ class SesameClient : private NimBLEClientCallbacks {
 	static constexpr size_t PK_SIZE = 64;
 	static constexpr size_t SECRET_SIZE = 16;
 	SesameClient();
+	SesameClient(const SesameClient&) = delete;
+	SesameClient& operator=(const SesameClient&) = delete;
 	virtual ~SesameClient();
 	bool begin(const BLEAddress& address, Sesame::model_t model);
 	bool set_keys(const std::array<std::byte, PK_SIZE>& public_key, const std::array<std::byte, SECRET_SIZE>& secret_key);
