@@ -6,6 +6,7 @@
 #include <mbedtls/ecp.h>
 #include <mbedtls/entropy.h>
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include "Sesame.h"
 #include "SesameInfo.h"
@@ -122,12 +123,12 @@ class SesameClient : private NimBLEClientCallbacks {
 	bool unlock(const char* tag);
 	bool lock(const char* tag);
 	bool click(const char* tag);
-	bool is_session_active() const { return state == state_t::active; }
+	bool is_session_active() const { return state.load() == state_t::active; }
 	void set_status_callback(status_callback_t callback);
 	void set_bot_status_callback(bot_status_callback_t callback);
 	void set_state_callback(state_callback_t callback);
 	Sesame::model_t get_model() const { return model; }
-	state_t get_state() const { return state; }
+	state_t get_state() const { return state.load(); }
 
  private:
 	static constexpr size_t MAX_RECV = 40;
@@ -163,7 +164,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	std::array<std::byte, 13> enc_iv;
 	std::array<std::byte, 13> dec_iv;
 	std::array<std::byte, MAX_RECV> recv_buffer;
-	volatile state_t state = state_t::idle;
+	std::atomic<state_t> state{state_t::idle};
 	size_t recv_size = 0;
 	bool skipping = false;
 	NimBLEClient* blec = nullptr;

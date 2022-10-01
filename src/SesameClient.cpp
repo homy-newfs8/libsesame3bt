@@ -207,10 +207,9 @@ SesameClient::connect(int retry) {
 
 void
 SesameClient::update_state(state_t new_state) {
-	if (state == new_state) {
+	if (state.exchange(new_state) == new_state) {
 		return;
 	}
-	state = new_state;
 	if (state_callback) {
 		state_callback(*this, new_state);
 	}
@@ -661,7 +660,7 @@ SesameClient::set_state_callback(state_callback_t callback) {
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient) {
-	if (state != state_t::idle) {
+	if (state.load() != state_t::idle) {
 		DEBUG_PRINTLN("Bluetooth disconnected by peer");
 		disconnect();
 	}
