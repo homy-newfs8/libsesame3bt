@@ -411,7 +411,6 @@ SesameClient::generate_session_key(const std::array<std::byte, TOKEN_SIZE>& loca
 	api_wrapper<mbedtls_cipher_context_t> ctx{mbedtls_cipher_init, mbedtls_cipher_free};
 	api_wrapper<mbedtls_mpi> sk{mbedtls_mpi_init, mbedtls_mpi_free};
 
-	bool rc = false;
 	if (!create_key_pair(sk, pk)) {
 		return false;
 	}
