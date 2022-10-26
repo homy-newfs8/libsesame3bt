@@ -46,17 +46,7 @@ hex2bin(const char* str, std::array<std::byte, N>& out) {
 	}
 	return true;
 }
-
-static std::string
-bin2hex(const std::byte* data, size_t data_size, bool upper = false) {
-	std::string out(data_size * 2, 0);
-	for (int i = 0; i < data_size; i++) {
-		out[i * 2] = hexchar(std::to_integer<uint8_t>(data[i]) >> 4, upper);
-		out[i * 2 + 1] = hexchar(std::to_integer<uint8_t>(data[i]) & 0x0f, upper);
-	}
-
-	return out;
-}
+std::string bin2hex(const std::byte* data, size_t data_size, bool upper = false);
 
 }  // namespace util
 }  // namespace libsesame3bt
