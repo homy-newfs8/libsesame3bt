@@ -26,8 +26,6 @@ SESAME 3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ラ
 ## 関連リポジトリ
 - [ESP32Sesame3App](https://github.com/homy-newfs8/ESP32Sesame3App)
 本ライブラリを使ったアプリケーションサンプル
-- [libsesame3bt-dev](https://github.com/homy-newfs8/libsesame3bt-dev)
-本ライブラリの開発用リポジトリ。サンプルファイルの実行等が可能です。
 
 ## 制限事項
 - 本ライブラリはSESAMEデバイスの初期設定を行うことができません。公式アプリで初期設定済みのSESAMEのみ制御可能です。

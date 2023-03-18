@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0] 2023-03-18
+
+### Minor changes
+
+- Bump NimBLE-Arduino version to 1.4.*
+- Project structure changed, build example and test in one repository
+	- libsesame3bt-dev project has been closed
+
 ## [0.5.0] 2022-09-10
 
 ### Major changes
