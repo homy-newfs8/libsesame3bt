@@ -17,11 +17,12 @@ SESAME 3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ラ
 
 ## 開発環境
 以下のデバイスで開発しました。
-- [M5StickC](https://www.switch-science.com/catalog/6350/)
+- [M5StickC](https://docs.m5stack.com/en/core/m5stickc)
+- [M5Atom Lite](https://docs.m5stack.com/en/core/atom_lite)
 
 ## 使用方法
 - 本ライブラリは開発環境[PlatformIO](https://platformio.org/)での利用を前提としています。動作に必要となる外部ライブラリ等については[library.json](library.json)に記述してあります。
-- C++17コンパイラの使用が前提となっています。PlatformIO上のESP32向け開発でC++17コンパイラを利用可能にする方法については、ESP32Sesame3Appのplatform.iniを参照願います。
+- C++17コンパイラの使用が前提となっています。PlatformIO上のESP32向け開発でC++17コンパイラを利用可能にする方法については、`platformio.ini`の`build_flags`と`build_unflags`の`-std`オプションを参照してください。
 
 ## 関連リポジトリ
 - [ESP32Sesame3App](https://github.com/homy-newfs8/ESP32Sesame3App)
