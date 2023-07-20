@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.7.0] 2023-07-20
+
+### Minor changes
+
+- #include filename fix in `Sesame.h`. Thanks @felidae for pointing out!
+
 ## [0.6.0] 2023-03-18
 
 ### Minor changes
