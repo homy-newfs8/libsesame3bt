@@ -1,5 +1,5 @@
 #pragma once
-#include <NimBleDevice.h>
+#include <NimBLEDevice.h>
 #include <cstddef>
 
 namespace libsesame3bt {
