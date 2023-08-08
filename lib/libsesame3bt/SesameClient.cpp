@@ -240,10 +240,12 @@ SesameClient::send_command(Sesame::op_code_t op_code,
 	std::array<std::byte, 1 + FRAGMENT_SIZE> fragment;  // 1 for header
 	int pos = 0;
 	for (size_t remain = pkt_size; remain > 0;) {
-		fragment[0] = packet_header_t{pos == 0, remain > FRAGMENT_SIZE ? packet_kind_t::not_finished
-		                                        : is_crypted           ? packet_kind_t::encrypted
-		                                                               : packet_kind_t::plain}
-		                  .value;
+		fragment[0] = packet_header_t{
+		    pos == 0,
+		    remain > FRAGMENT_SIZE ? packet_kind_t::not_finished
+		    : is_crypted           ? packet_kind_t::encrypted
+		                           : packet_kind_t::plain,
+		    std::byte{0}}.value;
 		size_t ssz = std::min(remain, FRAGMENT_SIZE);
 		std::copy(pkt + pos, pkt + pos + ssz, &fragment[1]);
 		if (!tx->writeValue(to_cptr(fragment), ssz + 1, false)) {
