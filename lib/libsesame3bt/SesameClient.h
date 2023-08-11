@@ -129,6 +129,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	void set_state_callback(state_callback_t callback);
 	Sesame::model_t get_model() const { return model; }
 	state_t get_state() const { return state.load(); }
+	void set_connect_timeout_sec(uint8_t timeout) { connect_timeout = timeout; }
 
  private:
 	static constexpr size_t MAX_RECV = 40;
@@ -178,6 +179,7 @@ class SesameClient : private NimBLEClientCallbacks {
 	};
 	state_callback_t state_callback = nullptr;
 	Sesame::model_t model;
+	uint8_t connect_timeout = 30;
 
 	bool is_key_set = false;
 	bool is_key_shared = false;

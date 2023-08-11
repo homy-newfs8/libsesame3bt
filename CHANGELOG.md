@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.8.0] 2023-08-11
+
+### Function added
+
+- add `set_connect_timeout_sec(uint8_t timeout)` to set BLE connection timeout. Default is 30s.
+
 ## [0.7.0] 2023-07-20
 
 ### Minor changes

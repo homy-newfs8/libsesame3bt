@@ -178,6 +178,7 @@ SesameClient::connect(int retry) {
 		blec = NimBLEDevice::createClient();
 		blec->setClientCallbacks(this, false);
 	}
+	blec->setConnectTimeout(connect_timeout);
 	for (int t = 0; t < 100; t++) {
 		if (blec->connect(address)) {
 			break;
