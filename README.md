@@ -60,7 +60,8 @@ void do_unlock_lock() {
 }
 ```
 # Sample App
-[ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
+* [ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
+* ESPHome External Component [esphome-sesame3](https://github.com/homy-newfs8/esphome-sesame3)
 
 # License
 MIT AND Apache-2.0
