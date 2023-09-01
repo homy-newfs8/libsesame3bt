@@ -39,8 +39,8 @@ const char* sesame_sec = SESAME_SECRET;
 using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
 
-SesameClient client{};
-SesameClient::Status last_status{};
+SesameClient client;
+SesameClient::Status last_status;
 SesameClient::state_t sesame_state;
 
 // Sesameの状態通知コールバック

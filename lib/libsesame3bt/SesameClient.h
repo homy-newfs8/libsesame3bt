@@ -23,6 +23,7 @@ class SesameClient : private NimBLEClientCallbacks {
  public:
 	enum class state_t : uint8_t { idle, connected, authenticating, active };
 	static constexpr size_t MAX_CMD_TAG_SIZE = 21;
+	static constexpr size_t MAX_CMD_TAG_SIZE_5 = 30;
 
 	class Status {
 		friend class SesameClient;
@@ -186,13 +187,21 @@ class SesameClient : private NimBLEClientCallbacks {
 
 	void reset_session();
 	void notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* data, size_t size, bool is_notify);
+	bool send_data(std::byte* pkt, size_t pkt_size, bool is_crypted);
 	bool send_command(Sesame::op_code_t op_code, Sesame::item_code_t item_code, const std::byte* data, size_t size, bool use_crypt);
+	bool send_command_5(Sesame::item_code_t item_code, const std::byte* data, size_t size, bool use_crypt);
 	bool decrypt(const std::byte* in, size_t in_size, std::byte* out, size_t out_size);
 	bool encrypt(const std::byte* in, size_t in_size, std::byte* out, size_t out_size);
+	bool decrypt_5(const std::byte* in, size_t in_size, std::byte* out, size_t out_size);
+	bool encrypt_5(const std::byte* in, size_t in_size, std::byte* out, size_t out_size);
 	void handle_publish_initial();
+	void handle_publish_initial_5(const Sesame::publish_initial_t&);
 	void handle_publish_mecha_setting();
 	void handle_publish_mecha_status();
 	void handle_response_login();
+	void handle_publish_mecha_setting_5();
+	void handle_publish_mecha_status_5();
+	void handle_response_login_5();
 	void update_mecha_status(const Sesame::mecha_status_t& status);
 	void update_mecha_setting(const Sesame::mecha_setting_t& setting);
 	bool ecdh(const api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, SK_SIZE>& out);
@@ -206,8 +215,10 @@ class SesameClient : private NimBLEClientCallbacks {
 	                          std::array<std::byte, 1 + PK_SIZE>& pk);
 	void init_endec_iv(const std::array<std::byte, Sesame::TOKEN_SIZE>& local_token,
 	                   const std::byte (&sesame_token)[Sesame::TOKEN_SIZE]);
+	void init_endec_iv_5(const std::byte (&sesame_token)[Sesame::TOKEN_SIZE]);
 	void fire_status_callback();
 	void update_state(state_t new_state);
+	bool is_sesame_5() const { return model == Sesame::model_t::sesame_5 || model == Sesame::model_t::sesame_5_pro; }
 
 	// NimBLEClientCallbacks
 	virtual void onDisconnect(NimBLEClient* pClient) override;

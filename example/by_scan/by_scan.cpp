@@ -52,6 +52,14 @@ model_str(Sesame::model_t model) {
 			return "SESAME Cycle";
 		case Sesame::model_t::sesame_4:
 			return "SESAME 4";
+		case Sesame::model_t::sesame_5:
+			return "SESAME 5";
+		case Sesame::model_t::sesame_5_pro:
+			return "SESAME 5 PRO";
+		case Sesame::model_t::sesame_touch:
+			return "SESAME TOUCH";
+		case Sesame::model_t::sesame_touch_pro:
+			return "SESAME TOUCH PRO";
 		default:
 			return "UNKNOWN";
 	}
@@ -79,8 +87,8 @@ scan_and_init() {
 			Serial.printf_P(PSTR("model=%s,addr=%s,UUID=%s,registered=%u\n"), model_str(_info->model), _info->address.toString().c_str(),
 			                _info->uuid.toString().c_str(), _info->flags.registered);
 			results.push_back(*_info);
+			// _scanner.stop(); // スキャンを停止させたくなったらstop()を呼び出す
 		}
-		// _scanner.stop(); // スキャンを停止させたくなったらstop()を呼び出す
 	});
 	Serial.printf_P(PSTR("%u devices found\n"), results.size());
 	auto found =

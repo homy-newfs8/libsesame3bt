@@ -9,7 +9,22 @@ class Sesame {
 	static constexpr size_t TOKEN_SIZE = 4;
 	static inline const BLEUUID SESAME3_SRV_UUID{"0000fd81-0000-1000-8000-00805f9b34fb"};
 
-	enum class model_t : int8_t { unknown = -1, sesame_3 = 0, wifi_2 = 1, sesame_bot = 2, sesame_cycle = 3, sesame_4 = 4 };
+	enum class model_t : int8_t {
+		unknown = -1,
+		sesame_3 = 0,
+		wifi_2 = 1,
+		sesame_bot = 2,
+		sesame_bike = 3,
+		sesame_cycle = 3,
+		sesame_4 = 4,
+		sesame_5 = 5,
+		sesame_bike_2 = 6,
+		sesame_5_pro = 7,
+		open_sensor_1 = 8,
+		sesame_touch_pro = 9,
+		sesame_touch = 10,
+		ble_connector = 11,
+	};
 	enum class motor_status_t : uint8_t { idle = 0, locking, holding, unlocking };
 	enum class op_code_t : uint8_t {
 		create = 1,
@@ -79,6 +94,12 @@ class Sesame {
 		} bot;
 		std::byte data[12]{};
 	};
+	struct __attribute__((packed)) mecha_setting_5_t {
+		int16_t lock_position;
+		int16_t unlock_position;
+		int16_t auto_lock_sec;
+	};
+
 	union __attribute__((packed)) mecha_status_t {
 		struct __attribute__((packed)) {
 			uint16_t voltage;
@@ -98,6 +119,22 @@ class Sesame {
 		} bot;
 		std::byte data[8]{};
 	};
+	struct __attribute__((packed)) mecha_status_5_t {
+		int16_t battery;
+		int16_t target;
+		int16_t position;
+		union __attribute__((packed)) {
+			struct __attribute__((packed)) {
+				uint8_t unknown1 : 1;
+				bool in_lock : 1;
+				uint8_t unknown2 : 2;
+				bool is_stop : 1;
+				bool is_battery_criticil : 1;
+			};
+			uint8_t value;
+		} flags;
+		float battery_voltage() const { return battery * 2.0f / 1000; }
+	};
 	struct __attribute__((packed)) publish_initial_t {
 		std::byte token[TOKEN_SIZE];
 	};
@@ -108,8 +145,14 @@ class Sesame {
 	struct __attribute__((packed)) publish_mecha_status_t {
 		mecha_status_t status;
 	};
+	struct __attribute__((packed)) publish_mecha_status_5_t {
+		mecha_status_5_t status;
+	};
 	struct __attribute__((packed)) publish_mecha_setting_t {
 		mecha_setting_t setting;
+	};
+	struct __attribute__((packed)) publish_mecha_setting_5_t {
+		mecha_setting_5_t setting;
 	};
 	struct __attribute__((packed)) response_login_t {
 		uint8_t op_code_2;
@@ -118,6 +161,10 @@ class Sesame {
 		std::byte _unknown[4];
 		mecha_setting_t mecha_setting;
 		mecha_status_t mecha_status;
+	};
+	struct __attribute__((packed)) response_login_5_t {
+		result_code_t result;
+		uint32_t timestamp;
 	};
 
  private:
