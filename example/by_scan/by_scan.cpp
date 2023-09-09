@@ -84,29 +84,29 @@ scan_and_init() {
 	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info) {
 		if (_info) {  // nullptrの検査を実施
 			// 結果をコピーして results vector に格納する
-			Serial.printf_P(PSTR("model=%s,addr=%s,UUID=%s,registered=%u\n"), model_str(_info->model), _info->address.toString().c_str(),
-			                _info->uuid.toString().c_str(), _info->flags.registered);
+			Serial.printf("model=%s,addr=%s,UUID=%s,registered=%u\n", model_str(_info->model), _info->address.toString().c_str(),
+			              _info->uuid.toString().c_str(), _info->flags.registered);
 			results.push_back(*_info);
 			// _scanner.stop(); // スキャンを停止させたくなったらstop()を呼び出す
 		}
 	});
-	Serial.printf_P(PSTR("%u devices found\n"), results.size());
+	Serial.printf("%u devices found\n", results.size());
 	auto found =
 	    std::find_if(results.cbegin(), results.cend(), [](auto& it) { return it.model == SESAME_MODEL && it.flags.registered; });
 	if (found != results.cend()) {
-		Serial.printf_P(PSTR("Using %s (%s)\n"), found->uuid.toString().c_str(), model_str(found->model));
+		Serial.printf("Using %s (%s)\n", found->uuid.toString().c_str(), model_str(found->model));
 		// 最初に見つけた SESAME_MODEL のデバイスに接続する
 		// 本サンプルでは認証用の鍵と見つかったSESAMEの組合せ確認は実施していないので、複数のSESAMEがある環境では接続に失敗することがある
 		if (!client.begin(found->address, found->model)) {
-			Serial.println(F("Failed to begin"));
+			Serial.println("Failed to begin");
 			return;
 		}
 		// SESAMEの鍵情報を設定
 		if (!client.set_keys(sesame_pk, sesame_sec)) {
-			Serial.println(F("Failed to set keys"));
+			Serial.println("Failed to set keys");
 		}
 	} else {
-		Serial.println(F("No usable Sesame found"));
+		Serial.println("No usable Sesame found");
 	}
 }
 
@@ -120,19 +120,19 @@ state_update(SesameClient& client, SesameClient::state_t state) {
 	sesame_state = state;
 	switch (state) {
 		case SesameClient::state_t::idle:  // 暇、接続していない
-			Serial.println(F("State: idle"));
+			Serial.println("State: idle");
 			break;
 		case SesameClient::state_t::connected:  // とりあえず接続はした
-			Serial.println(F("State: connected"));
+			Serial.println("State: connected");
 			break;
 		case SesameClient::state_t::authenticating:  // 認証結果待ち
-			Serial.println(F("State: authenticating"));
+			Serial.println("State: authenticating");
 			break;
 		case SesameClient::state_t::active:  // 認証完了しSesameが使える状態
-			Serial.println(F("State: active"));
+			Serial.println("State: active");
 			break;
 		default:
-			Serial.printf_P(PSTR("State: Unknown(%u)\n"), static_cast<uint8_t>(state));
+			Serial.printf("State: Unknown(%u)\n", static_cast<uint8_t>(state));
 			break;
 	}
 }
@@ -149,10 +149,10 @@ setup() {
 	client.set_state_callback(state_update);
 
 	// connectはたまに失敗するようなので3回リトライする
-	Serial.print(F("Connecting..."));
+	Serial.print("Connecting...");
 	connected = client.connect(3);
 
-	Serial.println(connected ? F("done") : F("failed"));
+	Serial.println(connected ? "done" : "failed");
 }
 
 bool unlock_requested = false;
@@ -166,7 +166,7 @@ loop() {
 	}
 	// 接続完了後に idle に遷移するのは認証エラーや切断が発生した場合(接続からやり直す必要がある)
 	if (sesame_state == SesameClient::state_t::idle) {
-		Serial.println(F("Failed to operate"));
+		Serial.println("Failed to operate");
 		connected = false;
 		// このサンプルではリトライは実装していない
 		return;
@@ -177,10 +177,10 @@ loop() {
 		return;
 	}
 	if (!unlock_requested) {
-		Serial.println(F("Unlocking"));
+		Serial.println("Unlocking");
 		client.unlock(u8"ラベルは21バイトに収まるよう(勝手に切ります)");
 		client.disconnect();
-		Serial.println(F("Disconnected"));
+		Serial.println("Disconnected");
 		connected = false;
 	}
 	delay(1000);
