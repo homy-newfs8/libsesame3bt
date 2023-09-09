@@ -45,7 +45,7 @@ class SesameClient : private NimBLEClientCallbacks {
 		int16_t position() const { return status.lock.position; }
 		int16_t lock_position() const { return setting.lock.lock_position; }
 		int16_t unlock_position() const { return setting.lock.unlock_position; }
-		float battery_pct() const { return voltage_to_pct(voltage()); }
+		float battery_pct() const { return voltage_to_pct(model == Sesame::model_t::sesame_bike ? voltage() * 2 : voltage()); }
 
 		bool operator==(const Status& that) const {
 			if (&that == this) {
@@ -69,8 +69,10 @@ class SesameClient : private NimBLEClientCallbacks {
 			float voltage;
 			float pct;
 		};
-		static inline const BatteryTable batt_tbl[] = {{6.0f, 100.0f}, {5.8f, 50.0f}, {5.7f, 40.0f}, {5.6f, 32.0f}, {5.4f, 21.0f},
-		                                               {5.2f, 13.0f},  {5.1f, 10.0f}, {5.0f, 7.0f},  {4.8f, 3.0f},  {4.6f, 0.0f}};
+		static inline const BatteryTable batt_tbl[] = {{5.85f, 100.0f}, {5.82f, 95.0f}, {5.79f, 90.0f}, {5.76f, 85.0f},
+		                                               {5.73f, 80.0f},  {5.70f, 70.0f}, {5.65f, 60.0f}, {5.60f, 50.0f},
+		                                               {5.55f, 40.0f},  {5.50f, 32.0f}, {5.40f, 21.0f}, {5.20f, 13.0f},
+		                                               {5.10f, 10.0f},  {5.0f, 7.0f},   {4.8f, 3.0f},   {4.6f, 0.0f}};
 	};
 
 	class BotStatus {
