@@ -100,76 +100,77 @@ setup() {
 }
 
 static uint32_t last_operated = 0;
-int state = 0;
-int count = 0;
+enum class state_t { init, connecting, unlocking, locking, done, finish, none };
+state_t state = state_t::init;
 
 void
 loop() {
 	// 接続開始、認証完了待ち、開錠、施錠を順次実行する
 	switch (state) {
-		case 0:
+		case state_t::init:
 			if (last_operated == 0 || millis() - last_operated > 3000) {
-				count++;
 				Serial.println("Connecting...");
 				// connectはたまに失敗するようなので3回リトライする
 				if (!client.connect(3)) {
 					Serial.println("Failed to connect, abort");
-					state = 4;
+					state = state_t::finish;
 					return;
 				}
 				Serial.println("connected");
 				last_operated = millis();
-				state = 1;
+				state = state_t::connecting;
 			}
 			break;
-		case 1:
+		case state_t::connecting:
 			if (client.is_session_active()) {
 				Serial.println("Unlocking");
-				// unloc(), lock()ともにコマンドの送信が成功した時点でtrueを返す
-				// 開錠、施錠されたかはstatusコールバックで確認する必要がある
+				// unloc(), lock(), click()ともにコマンドの送信が成功した時点でtrueを返す
+				// 動作状況はstatusコールバックで確認する必要がある
 				if (!client.unlock(u8"開錠:テスト")) {
 					Serial.println("Failed to send unlock command");
 				}
 				last_operated = millis();
-				if (client.get_model() == Sesame::model_t::sesame_cycle) {
-					state = 3;
-				} else {
-					state = 2;
-				}
+				state = state_t::unlocking;
 			} else {
 				if (client.get_state() == SesameClient::state_t::idle) {
 					Serial.println("Failed to authenticate");
-					state = 4;
+					state = state_t::finish;
 				}
 			}
 			break;
-		case 2:
+		case state_t::unlocking:
 			if (millis() - last_operated > 5000) {
 				Serial.println("Locking");
 				if (!client.lock(u8"施錠:テスト")) {
 					Serial.println("Failed to send lock command");
 				}
 				last_operated = millis();
-				state = 9999;
+				state = state_t::locking;
 			}
 			break;
-		case 3:
-			if (millis() - last_operated > 3000) {
+		case state_t::locking:
+			if (millis() - last_operated > 5000) {
+				Serial.println("Clicking");
+				if (!client.click(u8"クリック:テスト")) {
+					Serial.println("Failed to send lock command");
+				}
+				last_operated = millis();
+				state = state_t::done;
+			}
+			break;
+		case state_t::done:
+			if (millis() - last_operated > 5000) {
 				client.disconnect();
 				Serial.println("Disconnected");
 				last_operated = millis();
-				if (count > 0) {
-					state = 4;
-				} else {
-					state = 0;
-				}
+				state = state_t::finish;
 			}
 			break;
-		case 4:
+		case state_t::finish:
 			// テストを兼ねてデストラクタを呼び出しているが、あえて明示的に呼び出す必要はない
 			client.~SesameClient();
 			Serial.println("All done");
-			state = 9999;
+			state = state_t::none;
 			break;
 		default:
 			// nothing todo
