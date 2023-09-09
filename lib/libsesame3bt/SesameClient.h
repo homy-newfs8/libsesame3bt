@@ -34,9 +34,12 @@ class SesameClient : private NimBLEClientCallbacks {
 			std::fill(std::begin(status.data), std::end(status.data), std::byte{0});
 		}
 		float voltage() const {
-			return model == Sesame::model_t::sesame_cycle ? status.lock.voltage * 3.6f / 1023 : status.lock.voltage * 7.2f / 1023;
+			return model == Sesame::model_t::sesame_cycle ? status.lock.battery * 3.6f / 1023
+			       : SesameClient::is_sesame_5(model)     ? status.lock.battery * 2.0f / 1000
+			                                              : status.lock.battery * 7.2f / 1023;
 		}
-		bool voltage_critical() const { return status.lock.voltage_critical; }
+		[[deprecated("use battery_critical() instead")]] bool voltage_critical() const { return status.lock.is_battery_critical; }
+		bool battery_critical() const { return status.lock.is_battery_critical; }
 		bool in_lock() const { return status.lock.in_lock; }
 		bool in_unlock() const { return status.lock.in_unlock; }
 		int16_t position() const { return status.lock.position; }
@@ -78,8 +81,12 @@ class SesameClient : private NimBLEClientCallbacks {
 			std::fill(std::begin(setting.data), std::end(setting.data), std::byte{0});
 			std::fill(std::begin(status.data), std::end(status.data), std::byte{0});
 		}
-		float voltage() const { return status.bot.voltage * 3.6f / 1023; }
+		float voltage() const { return status.bot.battery * 3.6f / 1023; }
 		Sesame::motor_status_t motor_status() const { return status.bot.motor_status; }
+		bool stopped() const { return !status.bot.not_stop; }
+		bool battery_critical() const { return status.bot.is_battery_critical; }
+		bool in_lock() const { return status.bot.in_lock; }
+		bool in_unlock() const { return status.bot.in_unlock; }
 		uint8_t user_pref_dir() const { return setting.bot.user_pref_dir; }
 		uint8_t lock_sec() const { return setting.bot.lock_sec; }
 		uint8_t unlock_sec() const { return setting.bot.unlock_sec; }
@@ -219,6 +226,9 @@ class SesameClient : private NimBLEClientCallbacks {
 	void fire_status_callback();
 	void update_state(state_t new_state);
 	bool is_sesame_5() const { return model == Sesame::model_t::sesame_5 || model == Sesame::model_t::sesame_5_pro; }
+	static bool is_sesame_5(Sesame::model_t model) {
+		return model == Sesame::model_t::sesame_5 || model == Sesame::model_t::sesame_5_pro;
+	}
 
 	// NimBLEClientCallbacks
 	virtual void onDisconnect(NimBLEClient* pClient) override;

@@ -833,10 +833,10 @@ SesameClient::handle_publish_mecha_status_5() {
 	Sesame::mecha_status_t compat{};
 	compat.lock.target = msg->status.target;
 	compat.lock.position = msg->status.position;
-	compat.lock.in_lock = msg->status.flags.in_lock;
-	compat.lock.in_unlock = !msg->status.flags.in_lock;
-	compat.lock.voltage_critical = msg->status.flags.is_battery_criticil;
-	compat.lock.voltage = msg->status.battery_voltage() / (7.2f / 1023);
+	compat.lock.in_lock = msg->status.in_lock;
+	compat.lock.in_unlock = !msg->status.in_lock;
+	compat.lock.is_battery_critical = msg->status.is_battery_critical;
+	compat.lock.battery = msg->status.battery;
 	update_mecha_status(compat);
 	fire_status_callback();
 }

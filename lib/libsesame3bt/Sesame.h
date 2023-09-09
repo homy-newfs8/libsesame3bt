@@ -102,20 +102,31 @@ class Sesame {
 
 	union __attribute__((packed)) mecha_status_t {
 		struct __attribute__((packed)) {
-			uint16_t voltage;
+			uint16_t battery;
 			int16_t target;
 			int16_t position;
 			uint8_t retcode;
 			uint8_t unknown1 : 1;
-			uint8_t in_lock : 1;
-			uint8_t in_unlock : 1;
+			bool in_lock : 1;
+			bool in_unlock : 1;
 			uint8_t unknown2 : 2;
-			bool voltage_critical : 1;
+			bool is_battery_critical : 1;
 		} lock;
 		struct __attribute__((packed)) {
-			uint16_t voltage;
+			uint16_t battery;
 			uint16_t unknown1;
 			motor_status_t motor_status;
+			uint8_t unknown2[2];
+			union __attribute__((packed)) {
+				struct __attribute__((packed)) {
+					bool not_stop : 1;
+					bool in_lock : 1;
+					bool in_unlock : 1;
+					bool unknown3 : 2;
+					bool is_battery_critical : 1;
+				};
+				uint8_t flags;
+			};
 		} bot;
 		std::byte data[8]{};
 	};
@@ -129,10 +140,10 @@ class Sesame {
 				bool in_lock : 1;
 				uint8_t unknown2 : 2;
 				bool is_stop : 1;
-				bool is_battery_criticil : 1;
+				bool is_battery_critical : 1;
 			};
 			uint8_t value;
-		} flags;
+		};
 		float battery_voltage() const { return battery * 2.0f / 1000; }
 	};
 	struct __attribute__((packed)) publish_initial_t {
