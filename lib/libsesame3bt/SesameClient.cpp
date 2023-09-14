@@ -4,6 +4,7 @@
 #include <mbedtls/ecdh.h>
 #include <cinttypes>
 #include "api_wrapper.h"
+#include "os2.h"
 #include "util.h"
 
 #ifndef LIBSESAME3BT_DEBUG
@@ -24,41 +25,10 @@ constexpr size_t ADD_DATA_SIZE = 1;
 constexpr size_t TOKEN_SIZE = Sesame::TOKEN_SIZE;
 constexpr size_t IV_COUNTER_SIZE = 5;
 
-template <size_t N>
-static uint8_t*
-to_ptr(std::array<std::byte, N>& array) {
-	return reinterpret_cast<uint8_t*>(array.data());
-}
-
-template <size_t N>
-static const uint8_t*
-to_cptr(const std::array<std::byte, N>& array) {
-	return reinterpret_cast<const uint8_t*>(array.data());
-}
-
-static uint8_t*
-to_ptr(std::byte* p) {
-	return reinterpret_cast<uint8_t*>(p);
-}
-
-static const uint8_t*
-to_cptr(const std::byte* p) {
-	return reinterpret_cast<const uint8_t*>(p);
-}
-
 }  // namespace
 
-bool SesameClient::static_initialized = [] {
-	if (mbedtls_ctr_drbg_seed(&rng_ctx, mbedtls_entropy_func, &ent_ctx, nullptr, 0) != 0) {
-		DEBUG_PRINTLN(F("drbg_seed failed"));
-		return false;
-	}
-	if (mbedtls_ecp_group_load(&ec_grp, mbedtls_ecp_group_id::MBEDTLS_ECP_DP_SECP256R1) != 0) {
-		DEBUG_PRINTLN(F("ecp_group_load failed"));
-		return false;
-	}
-	return true;
-}();
+using util::to_cptr;
+using util::to_ptr;
 
 SesameClient::SesameClient() {}
 
@@ -89,101 +59,53 @@ SesameClient::disconnect() {
 }
 
 bool
-SesameClient::create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, 1 + PK_SIZE>& bin_pk) {
-	api_wrapper<mbedtls_mpi> temp_sk{mbedtls_mpi_init, mbedtls_mpi_free};
-	api_wrapper<mbedtls_ecp_point> point{mbedtls_ecp_point_init, mbedtls_ecp_point_free};
-
-	int mbrc;
-	if ((mbrc = mbedtls_ecdh_gen_public(&ec_grp, &temp_sk, &point, mbedtls_ctr_drbg_random, &rng_ctx)) != 0) {
-		DEBUG_PRINTF("%d: ecdh_gen_public failed\n", mbrc);
-		return false;
-	}
-	size_t olen;
-	if ((mbrc = mbedtls_ecp_point_write_binary(&ec_grp, &point, MBEDTLS_ECP_PF_UNCOMPRESSED, &olen, to_ptr(bin_pk), bin_pk.size())) !=
-	    0) {
-		DEBUG_PRINTF("%d: ecp_point_write_binary failed\n", mbrc);
-		return false;
-	}
-	if (olen != bin_pk.size()) {
-		DEBUG_PRINTLN("write_binary pk length not match");
-		return false;
-	}
-	if ((mbrc = mbedtls_mpi_copy(&sk, &temp_sk)) != 0) {
-		DEBUG_PRINTF("%d: mpi_copy failed\n", mbrc);
-		return false;
-	}
-	return true;
-}
-
-bool
 SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
+	this->address = address;
+	this->model = model;
 	switch (model) {
 		case Sesame::model_t::sesame_3:
 		case Sesame::model_t::sesame_4:
-		case Sesame::model_t::sesame_cycle:
+		case Sesame::model_t::sesame_bike:
 		case Sesame::model_t::sesame_bot:
+			handler.emplace(std::in_place_type<OS2Handler>, this);
+			break;
 		case Sesame::model_t::sesame_5:
 		case Sesame::model_t::sesame_5_pro:
+			handler.emplace(std::in_place_type<OS3Handler>, this);
 			break;
 		default:
+			DEBUG_PRINTF("%u: model not supported\n", static_cast<uint8_t>(model));
 			return false;
 	}
-	if (!static_initialized) {
+	if (!handler->init()) {
+		handler.reset();
 		return false;
 	}
-	this->address = address;
-	this->model = model;
-
 	return true;
 }
 
 bool
 SesameClient::set_keys(const char* pk_str, const char* secret_str) {
-	if ((!is_sesame_5() && !pk_str) || !secret_str) {
-		DEBUG_PRINTLN("pk_str or secret_str is nullptr");
+	if (!handler) {
+		DEBUG_PRINTLN("begin() not finished");
 		return false;
 	}
-	std::array<std::byte, SECRET_SIZE> secret;
-	if (!util::hex2bin(secret_str, secret)) {
-		DEBUG_PRINTLN("secret_str invalid format");
-		return false;
-	}
-	if (is_sesame_5()) {
-		std::copy(std::cbegin(secret), std::cend(secret), sesame_secret.begin());
-		is_key_set = true;
-		return true;
-	}
-	std::array<std::byte, PK_SIZE> pk;
-	if (!util::hex2bin(pk_str, pk)) {
-		DEBUG_PRINTLN("pk_str invalid format");
-		return false;
-	}
-	return set_keys(pk, secret);
+	return handler->set_keys(pk_str, secret_str);
 }
 
 bool
 SesameClient::set_keys(const std::array<std::byte, PK_SIZE>& public_key, const std::array<std::byte, SECRET_SIZE>& secret_key) {
-	std::array<std::byte, 1 + PK_SIZE> bin_pk;  // 1 for indicator (SEC1 2.3.4)
-	bin_pk[0] = std::byte{4};                   // uncompressed point indicator
-	std::copy(util::cbegin(public_key), util::cend(public_key), &bin_pk[1]);
-	int mbrc;
-	if ((mbrc = mbedtls_ecp_point_read_binary(&ec_grp, &sesame_pk, to_cptr(bin_pk), bin_pk.size())) != 0) {
-		DEBUG_PRINTF("%d: ecp_point_read_binary failed", mbrc);
+	if (!handler) {
+		DEBUG_PRINTLN("begin() not finished");
 		return false;
 	}
-	if ((mbrc = mbedtls_ecp_check_pubkey(&ec_grp, &sesame_pk)) != 0) {
-		DEBUG_PRINTF("%d: ecp_check_pubkey failed", mbrc);
-		return false;
-	}
-	std::copy(util::cbegin(secret_key), util::cend(secret_key), sesame_secret.begin());
-	is_key_set = true;
-
-	return true;
+	return handler->set_keys(public_key, secret_key);
 }
 
 bool
 SesameClient::connect(int retry) {
 	if (!is_key_set) {
+		DEBUG_PRINTLN("Keys not set");
 		return false;
 	}
 	if (!blec) {
@@ -232,49 +154,6 @@ SesameClient::update_state(state_t new_state) {
 }
 
 bool
-SesameClient::send_command(Sesame::op_code_t op_code,
-                           Sesame::item_code_t item_code,
-                           const std::byte* data,
-                           size_t data_size,
-                           bool is_crypted) {
-	const size_t pkt_size = 2 + data_size + (is_crypted ? TAG_SIZE : 0);  // 2 for op/item, 4 for encrypted tag
-	std::byte pkt[pkt_size];
-	if (is_crypted) {
-		std::byte plain[2 + data_size];
-		plain[0] = std::byte{op_code};
-		plain[1] = std::byte{item_code};
-		std::copy(data, data + data_size, &plain[2]);
-		if (!encrypt(plain, sizeof(plain), pkt, sizeof(pkt))) {
-			return false;
-		}
-	} else {
-		pkt[0] = std::byte{op_code};
-		pkt[1] = std::byte{item_code};
-		std::copy(data, data + data_size, &pkt[2]);
-	}
-	return send_data(pkt, pkt_size, is_crypted);
-}
-
-bool
-SesameClient::send_command_5(Sesame::item_code_t item_code, const std::byte* data, size_t data_size, bool is_crypted) {
-	const size_t pkt_size = 1 + data_size + (is_crypted ? TAG_SIZE : 0);  // 1 for item, 4 for encrypted tag
-	std::byte pkt[pkt_size];
-	if (is_crypted) {
-		std::byte plain[1 + data_size];
-		plain[0] = std::byte{item_code};
-		std::copy(data, data + data_size, &plain[1]);
-		if (!encrypt_5(plain, sizeof(plain), pkt, sizeof(pkt))) {
-			return false;
-		}
-	} else {
-		pkt[0] = std::byte{item_code};
-		std::copy(data, data + data_size, &pkt[1]);
-	}
-
-	return send_data(pkt, pkt_size, is_crypted);
-}
-
-bool
 SesameClient::send_data(std::byte* pkt, size_t pkt_size, bool is_crypted) {
 	std::array<std::byte, 1 + FRAGMENT_SIZE> fragment;  // 1 for header
 	int pos = 0;
@@ -309,28 +188,7 @@ SesameClient::decrypt(const std::byte* in, size_t in_len, std::byte* out, size_t
 		DEBUG_PRINTF("%d: auth_decrypt failed\n", mbrc);
 		return false;
 	}
-	dec_count++;
-	dec_count &= 0x7fffffffffLL;
-	auto p = reinterpret_cast<const std::byte*>(&dec_count);
-	std::copy(p, p + IV_COUNTER_SIZE, dec_iv.begin());
-	return true;
-}
-
-bool
-SesameClient::decrypt_5(const std::byte* in, size_t in_len, std::byte* out, size_t out_size) {
-	if (in_len < TAG_SIZE || out_size < in_len - TAG_SIZE) {
-		return false;
-	}
-	int mbrc;
-	if ((mbrc = mbedtls_ccm_auth_decrypt(&ccm_ctx, in_len - TAG_SIZE, to_cptr(dec_iv), dec_iv.size(), to_cptr(auth_add_data),
-	                                     auth_add_data.size(), to_cptr(in), to_ptr(out), to_cptr(&in[in_len - TAG_SIZE]),
-	                                     TAG_SIZE)) != 0) {
-		DEBUG_PRINTF("%d: auth_decrypt failed\n", mbrc);
-		return false;
-	}
-	dec_count++;
-	auto p = reinterpret_cast<const std::byte*>(&dec_count);
-	std::copy(p, p + IV_COUNTER_SIZE, dec_iv.begin());
+	handler->update_dec_iv();
 	return true;
 }
 
@@ -344,27 +202,7 @@ SesameClient::encrypt(const std::byte* in, size_t in_len, std::byte* out, size_t
 	                                      auth_add_data.size(), to_cptr(in), to_ptr(out), to_ptr(&out[in_len]), TAG_SIZE)) != 0) {
 		DEBUG_PRINTF("%d: encrypt_and_tag failed\n", rc);
 	}
-	enc_count++;
-	enc_count &= 0x7fffffffffLL;
-	enc_count |= 0x8000000000LL;
-	auto p = reinterpret_cast<const std::byte*>(&enc_count);
-	std::copy(p, p + IV_COUNTER_SIZE, enc_iv.begin());
-	return true;
-}
-
-bool
-SesameClient::encrypt_5(const std::byte* in, size_t in_len, std::byte* out, size_t out_size) {
-	if (out_size < in_len + TAG_SIZE) {
-		return false;
-	}
-	int rc;
-	if ((rc = mbedtls_ccm_encrypt_and_tag(&ccm_ctx, in_len, to_cptr(enc_iv), enc_iv.size(), to_cptr(auth_add_data),
-	                                      auth_add_data.size(), to_cptr(in), to_ptr(out), to_ptr(&out[in_len]), TAG_SIZE)) != 0) {
-		DEBUG_PRINTF("%d: encrypt_and_tag failed\n", rc);
-	}
-	enc_count++;
-	auto p = reinterpret_cast<const std::byte*>(&enc_count);
-	std::copy(p, p + IV_COUNTER_SIZE, enc_iv.begin());
+	handler->update_enc_iv();
 	return true;
 }
 
@@ -404,14 +242,8 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 			return;
 		}
 		std::array<std::byte, MAX_RECV - TAG_SIZE> decrypted{};
-		if (is_sesame_5()) {
-			if (!decrypt_5(recv_buffer.data(), recv_size, &decrypted[0], recv_size - TAG_SIZE)) {
-				return;
-			}
-		} else {
-			if (!decrypt(recv_buffer.data(), recv_size, &decrypted[0], recv_size - TAG_SIZE)) {
-				return;
-			}
+		if (!decrypt(recv_buffer.data(), recv_size, &decrypted[0], recv_size - TAG_SIZE)) {
+			return;
 		}
 		std::copy(decrypted.cbegin(), decrypted.cbegin() + recv_size - TAG_SIZE, &recv_buffer[0]);
 		recv_size -= TAG_SIZE;
@@ -457,265 +289,16 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 	}
 }
 
-bool
-SesameClient::generate_tag_response(const std::array<std::byte, 1 + PK_SIZE>& bpk,
-                                    const std::array<std::byte, TOKEN_SIZE>& local_tok,
-                                    const std::byte (&sesame_token)[4],
-                                    std::array<std::byte, AES_BLOCK_SIZE>& tag_response) {
-	api_wrapper<mbedtls_cipher_context_t> ctx{mbedtls_cipher_init, mbedtls_cipher_free};
-	int mbrc;
-	if ((mbrc = mbedtls_cipher_setup(&ctx, mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_AES_128_ECB))) != 0) {
-		DEBUG_PRINTF("%d: cipher_setup failed\n", mbrc);
-		return false;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_starts(&ctx, to_cptr(sesame_secret), sesame_secret.size() * 8)) != 0) {
-		DEBUG_PRINTF("%d: cmac_start failed\n", mbrc);
-		return false;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(sesame_ki), sesame_ki.size())) != 0 ||
-	    (mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(bpk) + 1, bpk.size() - 1)) != 0 ||
-	    (mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(local_tok), local_tok.size())) != 0 ||
-	    (mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(sesame_token), std::size(sesame_token))) != 0) {
-		DEBUG_PRINTF("%d: cmac_update failed\n", mbrc);
-		return false;
-	}
-
-	if ((mbrc = mbedtls_cipher_cmac_finish(&ctx, to_ptr(tag_response))) != 0) {
-		DEBUG_PRINTF("%d: cmac_finish failed\n", mbrc);
-		return false;
-	}
-	return true;
-}
-
-bool
-SesameClient::generate_session_key(const std::array<std::byte, TOKEN_SIZE>& local_tok,
-                                   const std::byte (&sesame_token)[TOKEN_SIZE],
-                                   std::array<std::byte, 1 + PK_SIZE>& pk) {
-	api_wrapper<mbedtls_cipher_context_t> ctx{mbedtls_cipher_init, mbedtls_cipher_free};
-	api_wrapper<mbedtls_mpi> sk{mbedtls_mpi_init, mbedtls_mpi_free};
-
-	if (!create_key_pair(sk, pk)) {
-		return false;
-	}
-	std::array<std::byte, SK_SIZE> ssec;
-	if (!ecdh(sk, ssec)) {
-		return false;
-	}
-
-	int mbrc;
-	if ((mbrc = mbedtls_cipher_setup(&ctx, mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_AES_128_ECB))) != 0) {
-		DEBUG_PRINTF("%d: cipher setup failed\n", mbrc);
-		return false;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_starts(&ctx, to_cptr(ssec), AES_KEY_SIZE * 8)) != 0) {
-		DEBUG_PRINTF("%d: cmac start failed\n", mbrc);
-		return false;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(local_tok), local_tok.size())) != 0 ||
-	    (mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(sesame_token), std::size(sesame_token))) != 0) {
-		DEBUG_PRINTF("%d: cmac_update failed\n", mbrc);
-		return false;
-	}
-	std::array<std::byte, 16> session_key;
-	if ((mbrc = mbedtls_cipher_cmac_finish(&ctx, to_ptr(session_key))) != 0) {
-		DEBUG_PRINTF("%d: cmac_finish failed\n", mbrc);
-		return false;
-	}
-
-	if ((mbrc = mbedtls_ccm_setkey(&ccm_ctx, mbedtls_cipher_id_t::MBEDTLS_CIPHER_ID_AES, to_cptr(session_key),
-	                               session_key.size() * 8)) != 0) {
-		DEBUG_PRINTF("%d: ccm_setkey failed\n", mbrc);
-		return false;
-	}
-	is_key_shared = true;
-	return true;
-}
-
-void
-SesameClient::init_endec_iv(const std::array<std::byte, TOKEN_SIZE>& local_tok, const std::byte (&sesame_token)[TOKEN_SIZE]) {
-	// iv = count[5] + local_tok + sesame_token
-	dec_iv = {};
-	std::copy(std::cbegin(sesame_token), std::cend(sesame_token),
-	          std::copy(local_tok.cbegin(), local_tok.cend(), &dec_iv[IV_COUNTER_SIZE]));
-	dec_count = 0;
-
-	std::copy(dec_iv.cbegin(), dec_iv.cend(), enc_iv.begin());
-	enc_count = 0x8000000000;
-	auto p = reinterpret_cast<const std::byte*>(&enc_count);
-	std::copy(p, p + IV_COUNTER_SIZE, enc_iv.begin());
-}
-
-void
-SesameClient::init_endec_iv_5(const std::byte (&sesame_token)[Sesame::TOKEN_SIZE]) {
-	dec_count = enc_count = 0;
-	dec_iv = {};
-	std::copy(std::cbegin(sesame_token), std::cend(sesame_token), &dec_iv[sizeof(dec_count) + 1]);
-	enc_iv = {};
-	std::copy(std::cbegin(sesame_token), std::cend(sesame_token), &enc_iv[sizeof(enc_count) + 1]);
-}
-
 void
 SesameClient::handle_publish_initial() {
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_initial_t)) {
-		DEBUG_PRINTF("%u: short response initial data\n", recv_size);
-		disconnect();
-		return;
-	}
-	DEBUG_PRINTF("%u: response initial\n", recv_size);
-	reset_session();
-	auto msg = reinterpret_cast<const Sesame::publish_initial_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	if (is_sesame_5()) {
-		handle_publish_initial_5(*msg);
-		return;
-	}
-
-	std::array<std::byte, TOKEN_SIZE> local_tok;
-	int mbrc;
-	if ((mbrc = mbedtls_ctr_drbg_random(&rng_ctx, to_ptr(local_tok), local_tok.size())) != 0) {
-		DEBUG_PRINTF("%d: drbg_random failed\n", mbrc);
-		disconnect();
-		return;
-	}
-
-	std::array<std::byte, 1 + PK_SIZE> bpk;
-	if (!generate_session_key(local_tok, msg->token, bpk)) {
-		disconnect();
-		return;
-	}
-	init_endec_iv(local_tok, msg->token);
-	std::array<std::byte, AES_BLOCK_SIZE> tag_response;
-	if (!generate_tag_response(bpk, local_tok, msg->token, tag_response)) {
-		disconnect();
-		return;
-	}
-
-	constexpr size_t resp_size = sesame_ki.size() + PK_SIZE + local_tok.size() + AUTH_TAG_TRUNCATED_SIZE;
-	std::array<std::byte, resp_size> resp;
-
-	// resp = sesame_ki + pk + local_tok + tag_response[:4]
-	std::copy(tag_response.cbegin(), tag_response.cbegin() + AUTH_TAG_TRUNCATED_SIZE,
-	          std::copy(local_tok.cbegin(), local_tok.cend(),
-	                    std::copy(bpk.begin() + 1, bpk.end(), std::copy(sesame_ki.cbegin(), sesame_ki.cend(), resp.begin()))));
-
-	if (send_command(Sesame::op_code_t::sync, Sesame::item_code_t::login, resp.data(), resp.size(), false)) {
-		update_state(state_t::authenticating);
-	} else {
-		disconnect();
-	}
-}
-
-void
-SesameClient::handle_publish_initial_5(const Sesame::publish_initial_t& msg) {
-	api_wrapper<mbedtls_cipher_context_t> ctx{mbedtls_cipher_init, mbedtls_cipher_free};
-	int mbrc;
-	if ((mbrc = mbedtls_cipher_setup(&ctx, mbedtls_cipher_info_from_type(mbedtls_cipher_type_t::MBEDTLS_CIPHER_AES_128_ECB))) != 0) {
-		DEBUG_PRINTF("%d: cipher_setup failed\n", mbrc);
-		disconnect();
-		return;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_starts(&ctx, to_cptr(sesame_secret), sesame_secret.size() * 8)) != 0) {
-		DEBUG_PRINTF("%d: cmac_start failed\n", mbrc);
-		disconnect();
-		return;
-	}
-	if ((mbrc = mbedtls_cipher_cmac_update(&ctx, to_cptr(msg.token), sizeof(msg.token))) != 0) {
-		DEBUG_PRINTF("%d: cmac_update failed\n", mbrc);
-		disconnect();
-		return;
-	}
-
-	std::array<std::byte, 16> session_key;
-	if ((mbrc = mbedtls_cipher_cmac_finish(&ctx, to_ptr(session_key))) != 0) {
-		DEBUG_PRINTF("%d: cmac_finish failed\n", mbrc);
-		disconnect();
-		return;
-	}
-	if ((mbrc = mbedtls_ccm_setkey(&ccm_ctx, mbedtls_cipher_id_t::MBEDTLS_CIPHER_ID_AES, to_cptr(session_key),
-	                               session_key.size() * 8)) != 0) {
-		DEBUG_PRINTF("%d: ccm_setkey failed\n", mbrc);
-		disconnect();
-		return;
-	}
-	is_key_shared = true;
-	init_endec_iv_5(msg.token);
-	if (send_command_5(Sesame::item_code_t::login, session_key.data(), 4, false)) {
-		update_state(state_t::authenticating);
-	} else {
-		disconnect();
-	}
-}
-
-bool
-SesameClient::ecdh(const api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, SK_SIZE>& out) {
-	api_wrapper<mbedtls_mpi> shared_secret(mbedtls_mpi_init, mbedtls_mpi_free);
-	int mbrc;
-	if ((mbrc = mbedtls_ecdh_compute_shared(&ec_grp, &shared_secret, &sesame_pk, &sk, mbedtls_ctr_drbg_random, &rng_ctx)) != 0) {
-		DEBUG_PRINTF("%d: ecdh_compute_shared failed\n", mbrc);
-		return false;
-	}
-	if ((mbrc = mbedtls_mpi_write_binary(&shared_secret, to_ptr(out), out.size())) != 0) {
-		DEBUG_PRINTF("%d: mpi_write_binary failed\n", mbrc);
-		return false;
-	}
-	return true;
-}
-
-void
-SesameClient::update_mecha_setting(const Sesame::mecha_setting_t& setting) {
-	this->mecha_setting = setting;
-}
-
-void
-SesameClient::handle_response_login_5() {
-	DEBUG_PRINTF("response_login = %u\n", recv_size);
-	DEBUG_PRINTF("resp=%s\n", util::bin2hex(recv_buffer.data(), recv_size).c_str());
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::response_login_5_t)) {
-		DEBUG_PRINTLN("short response login message");
-		disconnect();
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::response_login_5_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	if (msg->result != Sesame::result_code_t::success) {
-		DEBUG_PRINTF("%u: login response was not success\n", static_cast<uint8_t>(msg->result));
-		disconnect();
-		return;
-	}
-	time_t t = msg->timestamp;
-	struct tm tm;
-	gmtime_r(&t, &tm);
-	DEBUG_PRINTF("time=%04d/%02d/%02d %02d:%02d:%02d\n", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min,
-	             tm.tm_sec);
-
-	update_state(state_t::active);
-}
-
-void
-SesameClient::update_mecha_status(const Sesame::mecha_status_t& status) {
-	this->mecha_status = status;
+	handler->handle_publish_initial(&recv_buffer[sizeof(Sesame::message_header_t)], recv_size - sizeof(Sesame::message_header_t));
+	return;
 }
 
 void
 SesameClient::handle_response_login() {
-	DEBUG_PRINTLN(F("debug:login"));
-	if (is_sesame_5()) {
-		handle_response_login_5();
-		return;
-	}
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::response_login_t)) {
-		DEBUG_PRINTLN("short response login message");
-		disconnect();
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::response_login_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	if (msg->result != Sesame::result_code_t::success) {
-		DEBUG_PRINTF("%u: login response was not success\n", static_cast<uint8_t>(msg->result));
-		disconnect();
-		return;
-	}
-	update_state(state_t::active);
-	update_mecha_setting(msg->mecha_setting);
-	update_mecha_status(msg->mecha_status);
-	fire_status_callback();
+	handler->handle_response_login(&recv_buffer[sizeof(Sesame::message_header_t)], recv_size - sizeof(Sesame::message_header_t));
+	return;
 }
 
 bool
@@ -724,18 +307,11 @@ SesameClient::unlock(const char* tag) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	if (is_sesame_5()) {
-		std::array<char, 1 + MAX_CMD_TAG_SIZE_5> tagbytes{};
-		tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE_5);
-		std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-		return send_command_5(Sesame::item_code_t::unlock, reinterpret_cast<const std::byte*>(tagbytes.data()), tagbytes.size(), true);
-	} else {
-		std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
-		tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE);
-		std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-		return send_command(Sesame::op_code_t::async, Sesame::item_code_t::unlock, reinterpret_cast<const std::byte*>(tagbytes.data()),
-		                    tagbytes.size(), true);
-	}
+	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
+	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
+	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
+	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::unlock,
+	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
 }
 
 bool
@@ -748,18 +324,11 @@ SesameClient::lock(const char* tag) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	if (is_sesame_5()) {
-		std::array<char, 1 + MAX_CMD_TAG_SIZE_5> tagbytes{};
-		tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE_5);
-		std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-		return send_command_5(Sesame::item_code_t::lock, reinterpret_cast<const std::byte*>(tagbytes.data()), tagbytes.size(), true);
-	} else {
-		std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
-		tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE);
-		std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-		return send_command(Sesame::op_code_t::async, Sesame::item_code_t::lock, reinterpret_cast<const std::byte*>(tagbytes.data()),
-		                    tagbytes.size(), true);
-	}
+	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
+	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
+	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
+	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::lock,
+	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
 }
 
 bool
@@ -772,104 +341,37 @@ SesameClient::click(const char* tag) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
-	tagbytes[0] = util::truncate_utf8(tag, MAX_CMD_TAG_SIZE);
+	std::array<char, 1 + Handler::MAX_HISTORY_TAG_SIZE> tagbytes{};
+	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
 	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-	return send_command(Sesame::op_code_t::async, Sesame::item_code_t::click, reinterpret_cast<const std::byte*>(tagbytes.data()),
-	                    tagbytes.size(), true);
+	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::click,
+	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
 }
 
 void
 SesameClient::handle_publish_mecha_setting() {
-	if (is_sesame_5()) {
-		handle_publish_mecha_setting_5();
-		return;
-	}
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_mecha_setting_t)) {
-		DEBUG_PRINTF("%u: Unexpected size of mecha setting, ignored\n", recv_size);
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::publish_mecha_setting_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	update_mecha_setting(msg->setting);
-	fire_status_callback();
-}
-
-void
-SesameClient::handle_publish_mecha_setting_5() {
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_mecha_setting_5_t)) {
-		DEBUG_PRINTF("%u: Unexpected size of mecha setting, ignored\n", recv_size);
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::publish_mecha_setting_5_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	Sesame::mecha_setting_t compat{};
-	compat.lock.lock_position = msg->setting.lock_position;
-	compat.lock.unlock_position = msg->setting.unlock_position;
-	update_mecha_setting(compat);
-	fire_status_callback();
+	handler->handle_publish_mecha_setting(&recv_buffer[sizeof(Sesame::message_header_t)],
+	                                      recv_size - sizeof(Sesame::message_header_t));
+	return;
 }
 
 void
 SesameClient::handle_publish_mecha_status() {
-	if (is_sesame_5()) {
-		handle_publish_mecha_status_5();
-		return;
-	}
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_mecha_status_t)) {
-		DEBUG_PRINTF("%u: Unexpected size of mecha status, ignored\n", recv_size);
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::publish_mecha_status_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	update_mecha_status(msg->status);
-	fire_status_callback();
-}
-
-void
-SesameClient::handle_publish_mecha_status_5() {
-	if (recv_size < sizeof(Sesame::message_header_t) + sizeof(Sesame::publish_mecha_status_5_t)) {
-		DEBUG_PRINTF("%u: Unexpected size of mecha status, ignored\n", recv_size);
-		return;
-	}
-	auto msg = reinterpret_cast<const Sesame::publish_mecha_status_5_t*>(&recv_buffer[sizeof(Sesame::message_header_t)]);
-	Sesame::mecha_status_t compat{};
-	compat.lock.target = msg->status.target;
-	compat.lock.position = msg->status.position;
-	compat.lock.in_lock = msg->status.in_lock;
-	compat.lock.in_unlock = !msg->status.in_lock;
-	compat.lock.is_battery_critical = msg->status.is_battery_critical;
-	compat.lock.battery = msg->status.battery;
-	update_mecha_status(compat);
-	fire_status_callback();
+	handler->handle_publish_mecha_status(&recv_buffer[sizeof(Sesame::message_header_t)],
+	                                     recv_size - sizeof(Sesame::message_header_t));
+	return;
 }
 
 void
 SesameClient::fire_status_callback() {
-	if (model == Sesame::model_t::sesame_bot) {
-		if (bot_status_callback) {
-			bot_status_callback(*this, BotStatus(mecha_setting, mecha_status));
-		}
-	} else {
-		if (lock_status_callback) {
-			lock_status_callback(*this, Status(mecha_setting, mecha_status, model));
-		}
+	if (lock_status_callback) {
+		lock_status_callback(*this, sesame_status);
 	}
 }
 
 void
 SesameClient::set_status_callback(status_callback_t callback) {
-	if (model == Sesame::model_t::sesame_bot) {
-		DEBUG_PRINTLN("Do not use this method for SESAME bot");
-		return;
-	}
 	lock_status_callback = callback;
-}
-
-void
-SesameClient::set_bot_status_callback(bot_status_callback_t callback) {
-	if (model != Sesame::model_t::sesame_bot) {
-		DEBUG_PRINTLN("Use this method only for SESAME bot");
-		return;
-	}
-	bot_status_callback = callback;
 }
 
 void

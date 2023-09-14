@@ -64,6 +64,10 @@ SesameClient::state_t sesame_state[std::size(sesame_secret)];
 void
 setup() {
 	Serial.begin(115200);
+#ifdef ARDUINO_M5Stick_C
+	pinMode(10, OUTPUT);
+	digitalWrite(10, 0);
+#endif
 
 	BLEDevice::init("");
 	for (size_t i = 0; i < std::size(clients); i++) {
@@ -78,7 +82,7 @@ setup() {
 		clients[i].set_state_callback([i](auto& client, auto state) { sesame_state[i] = state; });
 		clients[i].set_status_callback([i](auto& client, auto status) {
 			if (status != sesame_status[i]) {
-				Serial.printf("%u: Setting lock=%d,unlock=%d\n", i, status.lock_position(), status.unlock_position());
+				// Serial.printf("%u: Setting lock=%d,unlock=%d\n", i, status.lock_position(), status.unlock_position());
 				Serial.printf("%u: Status in_lock=%u,in_unlock=%u,pos=%d,volt=%.2f,volt_crit=%u\n", i, status.in_lock(), status.in_unlock(),
 				              status.position(), status.voltage(), status.battery_critical());
 				sesame_status[i] = status;

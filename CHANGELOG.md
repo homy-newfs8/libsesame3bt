@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.0] 2023-09-14 (A.R.E.)
+
+### Major changes
+
+- SESAME 5 / SESAME 5 PRO support added
+  - Added new values to `Sesame::model_t`
+- Unified the callback for SESAME Lock and SESAME bot
+  - Removed `SesameClient::set_bot_status_callback()`
+- Removed retrieve setting APIs from `SesameClient::Status`
+- Added `SesameClient::LockSetting` and `SesameClient::BotSetting`
+- Updated battery remaining percentage calculation table (align to SDK 3.0)
+
 ## [0.8.0] 2023-08-11
 
 ### Function added

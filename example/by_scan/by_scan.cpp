@@ -48,7 +48,7 @@ model_str(Sesame::model_t model) {
 			return "Wi-Fi Module 2";
 		case Sesame::model_t::sesame_bot:
 			return "SESAME bot";
-		case Sesame::model_t::sesame_cycle:
+		case Sesame::model_t::sesame_bike:
 			return "SESAME Cycle";
 		case Sesame::model_t::sesame_4:
 			return "SESAME 4";
@@ -60,6 +60,8 @@ model_str(Sesame::model_t model) {
 			return "SESAME TOUCH";
 		case Sesame::model_t::sesame_touch_pro:
 			return "SESAME TOUCH PRO";
+		case Sesame::model_t::sesame_bike_2:
+			return "SESAME Cycle 2";
 		default:
 			return "UNKNOWN";
 	}
@@ -140,6 +142,10 @@ state_update(SesameClient& client, SesameClient::state_t state) {
 void
 setup() {
 	Serial.begin(115200);
+#ifdef ARDUINO_M5Stick_C
+	pinMode(10, OUTPUT);
+	digitalWrite(10, 0);
+#endif
 
 	// Bluetoothは初期化しておくこと
 	BLEDevice::init("");
@@ -178,7 +184,7 @@ loop() {
 	}
 	if (!unlock_requested) {
 		Serial.println("Unlocking");
-		client.unlock(u8"ラベルは21バイトに収まるよう(勝手に切ります)");
+		client.unlock(u8"ラベルは21バイトまたは30バイトに収まるように(勝手に切ります)");
 		client.disconnect();
 		Serial.println("Disconnected");
 		connected = false;

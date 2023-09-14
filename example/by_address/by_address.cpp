@@ -1,6 +1,6 @@
 ﻿/*
  * libasesame3btサンプル
- * SesameのBluetoothアドレスがわかっている場合
+ * SesameのBluetoothアドレスを指定して接続する場合
  */
 #include <Arduino.h>
 #include <Sesame.h>
@@ -19,22 +19,17 @@
 #if !defined(SESAME_PK)
 // 128文字の16進数でSesameの公開鍵(sesame-qr-reader 結果の Public Key)
 #define SESAME_PK "**REPLACE**"
+// SESAME 5 / SESAME 5 PRO では不要なので以下のように定義する
+// #define SESAME_PK nullptr
 #endif
 #if !defined(SESAME_ADDRESS)
 // 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")
 #define SESAME_ADDRESS "**REPLACE**"
 #endif
 #if !defined(SESAME_MODEL)
-// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_cycle)
+// 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_bike, sesame_bot, sesame_5, sesame_5_pro)
 #define SESAME_MODEL Sesame::model_t::sesame_3
 #endif
-
-// 64 bytes public key of Sesame
-// 128 bytes hex str
-const char* sesame_pk = SESAME_PK;
-// 16 bytes secret key of Sesame
-// 32 bytes hex str
-const char* sesame_sec = SESAME_SECRET;
 
 using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
@@ -43,16 +38,31 @@ SesameClient client;
 SesameClient::Status last_status;
 SesameClient::state_t sesame_state;
 
+static const char*
+motor_status_str(Sesame::motor_status_t status) {
+	switch (status) {
+		case Sesame::motor_status_t::idle:
+			return "idle";
+		case Sesame::motor_status_t::locking:
+			return "locking";
+		case Sesame::motor_status_t::holding:
+			return "holding";
+		case Sesame::motor_status_t::unlocking:
+			return "unlocking";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 // Sesameの状態通知コールバック
 // Sesameのつまみの位置、電圧、施錠開錠状態が通知される
 // Sesameからの通知がある毎に呼び出される(変化がある場合のみ通知されている模様)
-// Sesameの設定変更があった場合も呼び出される(はずだが、今のところ動作していない)
 void
 status_update(SesameClient& client, SesameClient::Status status) {
 	if (status != last_status) {
-		Serial.printf("Setting lock=%d,unlock=%d\n", status.lock_position(), status.unlock_position());
-		Serial.printf("Status in_lock=%u,in_unlock=%u,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u\n", status.in_lock(),
-		              status.in_unlock(), status.position(), status.voltage(), status.battery_pct(), status.battery_critical());
+		Serial.printf("Status in_lock=%u,in_unlock=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
+		              status.in_lock(), status.in_unlock(), status.target(), status.position(), status.voltage(), status.battery_pct(),
+		              status.battery_critical(), motor_status_str(status.motor_status()));
 		last_status = status;
 	}
 }
@@ -60,52 +70,84 @@ status_update(SesameClient& client, SesameClient::Status status) {
 void
 setup() {
 	Serial.begin(115200);
+#ifdef ARDUINO_M5Stick_C
+	pinMode(10, OUTPUT);
+	digitalWrite(10, 0);
+#endif
 
 	// Bluetoothは初期化しておくこと
 	BLEDevice::init("");
 
-	// Bluetoothアドレスと機種コードを設定(sesame_3, sesame_4, sesame_cycle を指定可能)
+	// Bluetoothアドレスと機種コードを設定(sesame_3, sesame_4, sesame_bike, sesame_bot, sesame_5, sesame_5_pro を指定可能)
+	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
 	if (!client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 		Serial.println("Failed to begin");
 		return;
 	}
 	// Sesameの鍵情報を設定
-	if (!client.set_keys(sesame_pk, sesame_sec)) {
+	if (!client.set_keys(SESAME_PK, SESAME_SECRET)) {
 		Serial.println("Failed to set keys");
 		return;
 	}
 	// SesameClient状態コールバックを設定
 	client.set_state_callback([](auto& client, auto state) { sesame_state = state; });
 	// Sesame状態コールバックを設定
-	// (SESAME botは異なる呼び出しが必要。by_address_botを参照)
 	client.set_status_callback(status_update);
 }
 
+enum class app_state {
+	init,
+	pre_unlock,
+	pre_lock,
+	pre_click,
+	pre_close,
+	pre_delete,
+	idle,
+};
+
 static uint32_t last_operated = 0;
-int state = 0;
+app_state state = app_state::init;
 int count = 0;
 
 void
 loop() {
 	// 接続開始、認証完了待ち、開錠、施錠を順次実行する
 	switch (state) {
-		case 0:
+		case app_state::init:
 			if (last_operated == 0 || millis() - last_operated > 3000) {
 				count++;
 				Serial.println("Connecting...");
 				// connectはたまに失敗するようなので3回リトライする
 				if (!client.connect(3)) {
 					Serial.println("Failed to connect, abort");
-					state = 4;
+					state = app_state::pre_delete;
 					return;
 				}
 				Serial.println("connected");
 				last_operated = millis();
-				state = 1;
+				state = app_state::pre_unlock;
 			}
 			break;
-		case 1:
+		case app_state::pre_unlock:
+			// 認証が完了した
 			if (client.is_session_active()) {
+				// SesameClientの状態が Sesame::state_t::active になると設定を読み出し可能
+				// 設定は接続完了時にのみ読み出されるため、接続後に他のアプリで変更された値を知ることはできない
+				// SESAME Bot とそれ以外では読み出される設定値クラスが異なる
+				// LockSettingとBotSettingのvariant型が得られるので、型を指定(判定)して読み出す必要がある
+				if (const auto* setting = std::get_if<SesameClient::LockSetting>(&client.get_setting()); setting) {
+					// 自動ロック時間は SESAME 5(PRO) のみ取得可能。その他の機種では -1 (不明)が得られる。
+					// auto_lock_sec() が 0 であれば自動ロック無効
+					Serial.printf("Setting lock=%d,unlock=%d,auto_lock=%d\n", setting->lock_position(), setting->unlock_position(),
+					              setting->auto_lock_sec());
+				} else if (const auto* setting = std::get_if<SesameClient::BotSetting>(&client.get_setting()); setting) {
+					Serial.printf(
+					    "Setting "
+					    "pref_dir=%u,lock_sec=%u,unlock_sec=%u,click_lock_sec=%u,click_unlock_sec=%u,click_hold_sec=%u,button_mode=%u\n",
+					    setting->user_pref_dir(), setting->lock_sec(), setting->unlock_sec(), setting->click_lock_sec(),
+					    setting->click_unlock_sec(), setting->click_hold_sec(), setting->button_mode());
+				}
+
 				Serial.println("Unlocking");
 				// unloc(), lock()ともにコマンドの送信が成功した時点でtrueを返す
 				// 開錠、施錠されたかはstatusコールバックで確認する必要がある
@@ -113,45 +155,62 @@ loop() {
 					Serial.println("Failed to send unlock command");
 				}
 				last_operated = millis();
-				if (client.get_model() == Sesame::model_t::sesame_cycle) {
-					state = 3;
+				if (client.get_model() == Sesame::model_t::sesame_bike) {
+					// セサミサイクルは unlock しかできない
+					state = app_state::pre_close;
 				} else {
-					state = 2;
+					// 他の機種は次に lockさせる
+					state = app_state::pre_lock;
 				}
 			} else {
+				// 接続後、切断されるとSesameClientの状態がidleになる
 				if (client.get_state() == SesameClient::state_t::idle) {
 					Serial.println("Failed to authenticate");
-					state = 4;
+					state = app_state::pre_close;
 				}
 			}
 			break;
-		case 2:
+		case app_state::pre_lock:
 			if (millis() - last_operated > 5000) {
 				Serial.println("Locking");
 				if (!client.lock(u8"施錠:テスト")) {
 					Serial.println("Failed to send lock command");
 				}
 				last_operated = millis();
-				state = 3;
+				if (client.get_model() == Sesame::model_t::sesame_bot) {
+					// セサミbotは click() API を利用可能
+					// click() はセサミアプリでボタンをタップした場合と同じ動作
+					state = app_state::pre_click;
+				} else {
+					// その他の機種では状態の読み出しのみ継続する
+					// 手動で動かすと状態変更が通知される
+					state = app_state::idle;
+				}
 			}
 			break;
-		case 3:
+		case app_state::pre_click:
+			if (millis() - last_operated > 3000) {
+				Serial.println("Clicking");
+				if (!client.click(u8"クリック:テスト")) {
+					Serial.println("Failed to send click command");
+				}
+				last_operated = millis();
+				state = app_state::pre_close;
+			}
+			break;
+		case app_state::pre_close:
 			if (millis() - last_operated > 3000) {
 				client.disconnect();
 				Serial.println("Disconnected");
 				last_operated = millis();
-				if (count > 0) {
-					state = 4;
-				} else {
-					state = 0;
-				}
+				state = app_state::pre_delete;
 			}
 			break;
-		case 4:
+		case app_state::pre_delete:
 			// テストを兼ねてデストラクタを呼び出しているが、あえて明示的に呼び出す必要はない
 			client.~SesameClient();
 			Serial.println("All done");
-			state = 9999;
+			state = app_state::idle;
 			break;
 		default:
 			// nothing todo

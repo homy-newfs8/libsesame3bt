@@ -1,5 +1,5 @@
 # libsesame3bt
-ESP32 library to control SESAME 3 / SESAME 4 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME 3 / SESAME 4 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
 
 # Usage
 platformio.ini
@@ -8,7 +8,7 @@ platformio.ini
 platform = espressif32
 framework = arduino
 lib_deps =
-	https://github.com/homy-newfs8/libsesame3bt#0.8.0
+	https://github.com/homy-newfs8/libsesame3bt#0.9.0
 build_flags =
 	-std=gnu++17
 build_unflags =
@@ -48,9 +48,9 @@ void do_unlock_lock() {
 	// Use SesameInfo to initialize
 	client.begin(sesameInfo.addr, sesameInfo.model);
 	// or specify bluetooth address and model type directory
-	client.begin(BLEAddress{"***your device address***", BLE_ADDR_RANDOM}, Sesame::model_t::sesame_3);
+	client.begin(BLEAddress{"***your device address***", BLE_ADDR_RANDOM}, Sesame::model_t::sesame_5);
 
-	client.set_keys(SESAME_PK, SESAME_SECRET);
+	client.set_keys(nullptr, SESAME_SECRET);
 	client.connect();
 	// Wait for connection and authentication done
 	// See example/by_scan/by_scan.cpp for details
@@ -61,6 +61,8 @@ void do_unlock_lock() {
 ```
 # Sample App
 * [ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
+
+# Integrate to your Home Automation system without code
 * ESPHome External Component [esphome-sesame3](https://github.com/homy-newfs8/esphome-sesame3)
 
 # License
