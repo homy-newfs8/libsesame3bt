@@ -1,6 +1,6 @@
 # Changelog
 
-# [0.10.0] 2023-09-XX
+# [0.10.0] 2023-09-23
 
 ### Function added
 
