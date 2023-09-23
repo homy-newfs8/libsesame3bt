@@ -218,11 +218,17 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 		recv_size = 0;
 	}
 	if (skipping) {
+		if (h.kind == SesameClient::packet_kind_t::encrypted) {
+			handler->update_dec_iv();
+		}
 		return;
 	}
 	if (recv_size + len - 1 > MAX_RECV) {
 		DEBUG_PRINTLN("Received data too long, skipping");
 		skipping = true;
+		if (h.kind == SesameClient::packet_kind_t::encrypted) {
+			handler->update_dec_iv();
+		}
 		return;
 	}
 	std::copy(p + 1, p + len, &recv_buffer[recv_size]);
@@ -278,6 +284,11 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 				case Sesame::item_code_t::login:
 					handle_response_login();
 					break;
+				case Sesame::item_code_t::history:
+					if (history_callback) {
+						handler->handle_history(&recv_buffer[sizeof(Sesame::message_header_t)], recv_size - sizeof(Sesame::message_header_t));
+					}
+					break;
 				default:
 					DEBUG_PRINTF("%u: Unsupported item on response\n", static_cast<uint8_t>(msg->item_code));
 					break;
@@ -302,16 +313,34 @@ SesameClient::handle_response_login() {
 }
 
 bool
+SesameClient::request_history() {
+	std::byte flag{0};
+	return handler->send_command(Sesame::op_code_t::read, Sesame::item_code_t::history, &flag, sizeof(flag), true);
+}
+
+void
+SesameClient::fire_history_callback(const History& history) {
+	if (history_callback) {
+		history_callback(*this, history);
+	}
+}
+
+bool
+SesameClient::send_cmd_with_tag(Sesame::item_code_t code, const char* tag) {
+	std::array<char, 1 + Handler::MAX_HISTORY_TAG_SIZE> tagchars{};
+	tagchars[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
+	std::copy(tag, tag + tagchars[0], &tagchars[1]);
+	auto tagbytes = reinterpret_cast<std::byte*>(tagchars.data());
+	return handler->send_command(Sesame::op_code_t::async, code, tagbytes, handler->get_cmd_tag_size(tagbytes), true);
+}
+
+bool
 SesameClient::unlock(const char* tag) {
 	if (!is_session_active()) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
-	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
-	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::unlock,
-	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
+	return send_cmd_with_tag(Sesame::item_code_t::unlock, tag);
 }
 
 bool
@@ -324,11 +353,7 @@ SesameClient::lock(const char* tag) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	std::array<char, 1 + MAX_CMD_TAG_SIZE> tagbytes{};
-	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
-	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::lock,
-	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
+	return send_cmd_with_tag(Sesame::item_code_t::lock, tag);
 }
 
 bool
@@ -341,11 +366,7 @@ SesameClient::click(const char* tag) {
 		DEBUG_PRINTLN("Cannot operate while session is not active");
 		return false;
 	}
-	std::array<char, 1 + Handler::MAX_HISTORY_TAG_SIZE> tagbytes{};
-	tagbytes[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
-	std::copy(tag, tag + tagbytes[0], &tagbytes[1]);
-	return handler->send_command(Sesame::op_code_t::async, Sesame::item_code_t::click,
-	                             reinterpret_cast<const std::byte*>(tagbytes.data()), handler->get_max_history_tag_size() + 1, true);
+	return send_cmd_with_tag(Sesame::item_code_t::click, tag);
 }
 
 void

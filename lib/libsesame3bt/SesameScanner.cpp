@@ -79,7 +79,7 @@ SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
 			DEBUG_PRINTF("%s: Short manufacturer data for WiFi module, ignore this device\n", addr.toString().c_str());
 		}
 		std::copy(std::cbegin(manu_data) + 5, std::cbegin(manu_data) + 11,
-		          std::copy(util::cbegin(WIFI_MODULE_UUID_HEAD), util::cend(WIFI_MODULE_UUID_HEAD), uuid_bin));
+		          std::copy(std::cbegin(WIFI_MODULE_UUID_HEAD), std::cend(WIFI_MODULE_UUID_HEAD), uuid_bin));
 	} else {
 		auto name = adv->getName();
 		if (name.length() != 22) {

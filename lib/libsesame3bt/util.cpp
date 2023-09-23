@@ -29,6 +29,43 @@ truncate_utf8(const char* str, size_t len, size_t limit) {
 	return len;
 }
 
+static constexpr bool
+utf_follow(char c) {
+	return (c & 0xc0) == 0x80;
+}
+
+size_t
+cleanup_tail_utf8(const char* str, size_t len) {
+	for (size_t i = 0; i < len; i++) {
+		if (str[i] == 0) {
+			return i;
+		}
+		if ((str[i] & 0x80) == 0) {
+			continue;
+		}
+		if ((str[i] & 0xf8) == 0xf0) {  // 4 bytes
+			if (len >= i + 4 && utf_follow(str[i + 1]) && utf_follow(str[i + 2]) && utf_follow(str[i + 3])) {
+				i += 3;
+				continue;
+			}
+		}
+		if ((str[i] & 0xf0) == 0xe0) {  // 3 bytes
+			if (len >= i + 3 && utf_follow(str[i + 1]) && utf_follow(str[i + 2])) {
+				i += 2;
+				continue;
+			}
+		}
+		if ((str[i] & 0xe0) == 0xc0) {  // 2 bytes
+			if (len >= i + 2 && utf_follow(str[i + 1])) {
+				++i;
+				continue;
+			}
+		}
+		return i;
+	}
+	return len;
+}
+
 int8_t
 nibble(char c) {
 	if (c >= '0' && c <= '9') {

@@ -52,6 +52,12 @@ class Handler {
 	void handle_publish_mecha_status(const std::byte* in, size_t in_len) {
 		std::visit([in, in_len](auto& v) { v.handle_publish_mecha_status(in, in_len); }, handler);
 	}
+	void handle_history(const std::byte* in, size_t in_len) {
+		std::visit([in, in_len](auto& v) { v.handle_history(in, in_len); }, handler);
+	}
+	size_t get_cmd_tag_size(const std::byte* tagbytes) const {
+		return std::visit([tagbytes](auto& v) { return v.get_cmd_tag_size(tagbytes); }, handler);
+	}
 
 	static constexpr size_t MAX_HISTORY_TAG_SIZE = std::max(OS2Handler::MAX_HISTORY_TAG_SIZE, OS3Handler::MAX_HISTORY_TAG_SIZE);
 

@@ -77,6 +77,27 @@ class Sesame {
 		busy = 7,
 		invalid_param = 8
 	};
+	enum class history_type_t : uint8_t {
+		none = 0,
+		ble_lock = 1,
+		ble_unlock,
+		time_changed,
+		autolock_updated,
+		mech_setting_updated,
+		autolock,
+		manual_locked,
+		manual_unlocked,
+		manual_else,
+		drive_locked,
+		drive_unlocked,
+		drive_failed,
+		ble_adv_param_updated,
+		wm2_lock,
+		wm2_unlock,
+		web_lock,
+		web_unlock,
+		drive_clicked = 21,  // observed value
+	};
 
 	union __attribute__((packed)) mecha_setting_t {
 		struct __attribute((packed)) {
@@ -165,6 +186,20 @@ class Sesame {
 	struct __attribute__((packed)) response_login_5_t {
 		result_code_t result;
 		uint32_t timestamp;
+	};
+	struct __attribute__((packed)) response_history_t {
+		uint8_t op_code_2;
+		result_code_t result;
+		int32_t record_id;
+		history_type_t type;
+		long long timestamp;
+	};
+	struct __attribute__((packed)) response_history_5_t {
+		result_code_t result;
+		int32_t record_id;
+		history_type_t type;
+		uint32_t timestamp;
+		mecha_status_5_t mecha_status;
 	};
 
  private:

@@ -1,32 +1,20 @@
 #pragma once
 #include <Arduino.h>
 #include <cstddef>
+#include <cstring>
 #include <iterator>
 #include <string>
 
 namespace libsesame3bt {
 namespace util {
 
-template <class C>
-constexpr auto size(const C& c) -> decltype(c.size());
-
-template <class T, size_t N>
-constexpr size_t size(const T (&array)[N]) noexcept;
-
-template <class C>
-auto
-cbegin(const C& container) -> decltype(std::begin(container)) {
-	return std::begin(container);
-}
-
-template <class C>
-auto
-cend(const C& container) -> decltype(std::end(container)) {
-	return std::end(container);
-}
-
 size_t truncate_utf8(const char* str, size_t limit);
 size_t truncate_utf8(const char* str, size_t len, size_t limit);
+size_t cleanup_tail_utf8(const char* str, size_t len);
+inline size_t
+cleanup_tail_utf8(const char* str) {
+	return cleanup_tail_utf8(str, std::strlen(str));
+}
 int8_t nibble(char c);
 char hexchar(int b, bool upper = false);
 

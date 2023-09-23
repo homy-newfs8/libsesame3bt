@@ -32,7 +32,9 @@ class OS2Handler {
 	void handle_response_login(const std::byte* in, size_t in_len);
 	void handle_publish_mecha_setting(const std::byte* in, size_t in_len);
 	void handle_publish_mecha_status(const std::byte* in, size_t in_len);
+	void handle_history(const std::byte* in, size_t in_len);
 	size_t get_max_history_tag_size() const { return MAX_HISTORY_TAG_SIZE; }
+	size_t get_cmd_tag_size(const std::byte* tag) const { return MAX_HISTORY_TAG_SIZE + 1; }
 	static constexpr size_t MAX_HISTORY_TAG_SIZE = 21;
 
  private:

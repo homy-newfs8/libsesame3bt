@@ -185,6 +185,58 @@ OS2Handler::handle_response_login(const std::byte* in, size_t in_len) {
 }
 
 void
+OS2Handler::handle_history(const std::byte* in, size_t in_len) {
+	DEBUG_PRINTF("history(%u): %s\n", in_len, util::bin2hex(in, in_len).c_str());
+	SesameClient::History history{};
+	if (in_len < 2) {
+		DEBUG_PRINTF("%u: Unexpected size of history, ignored\n", in_len);
+		client->fire_history_callback(history);
+		return;
+	}
+	if (static_cast<Sesame::result_code_t>(in[1]) != Sesame::result_code_t::success) {
+		DEBUG_PRINTF("%u: Failure response to request history\n", static_cast<uint8_t>(in[1]));
+		client->fire_history_callback(history);
+		return;
+	}
+	if (in_len < sizeof(Sesame::response_history_t)) {
+		DEBUG_PRINTF("%u: Unexpected size of history, ignored\n", in_len);
+		client->fire_history_callback(history);
+		return;
+	}
+	const auto* hist = reinterpret_cast<const Sesame::response_history_t*>(in);
+	history.time = static_cast<time_t>(hist->timestamp / 1000);
+	auto histtype = hist->type;
+	if (histtype > Sesame::history_type_t::web_unlock && histtype != Sesame::history_type_t::drive_clicked) {
+		histtype = Sesame::history_type_t::none;
+	}
+	constexpr size_t SKIP_SIZE = 18;
+	if (in_len > sizeof(Sesame::response_history_t) + SKIP_SIZE) {
+		const auto* tag_data = reinterpret_cast<const char*>(in + sizeof(Sesame::response_history_t) + SKIP_SIZE);
+		uint8_t tag_len = tag_data[0];
+		if (histtype == Sesame::history_type_t::ble_lock || histtype == Sesame::history_type_t::ble_unlock) {
+			if (tag_len >= 60) {
+				histtype =
+				    histtype == Sesame::history_type_t::ble_lock ? Sesame::history_type_t::web_lock : Sesame::history_type_t::web_unlock;
+				tag_len %= 30;
+			} else if (tag_len >= 30) {
+				histtype =
+				    histtype == Sesame::history_type_t::ble_lock ? Sesame::history_type_t::wm2_lock : Sesame::history_type_t::wm2_unlock;
+				tag_len %= 30;
+			}
+		}
+		tag_len = std::min<uint8_t>(tag_len, get_max_history_tag_size());
+		const auto* tag_str = tag_data + 1;
+		history.tag_len = util::cleanup_tail_utf8(tag_str, tag_len);
+		*std::copy(tag_str, tag_str + history.tag_len, history.tag) = 0;
+	} else {
+		history.tag_len = 0;
+		history.tag[0] = 0;
+	}
+	history.type = histtype;
+	client->fire_history_callback(history);
+}
+
+void
 OS2Handler::update_sesame_status(const Sesame::mecha_status_t& mecha_status) {
 	if (client->model == Sesame::model_t::sesame_bot) {
 		client->sesame_status = {mecha_status.bot, battery_voltage(client->model, mecha_status.bot.battery)};

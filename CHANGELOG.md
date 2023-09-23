@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.10.0] 2023-09-XX
+
+### Function added
+
+- History reading method `request_history()` added. See by_address example for usage.
+
+### Minor changes
+
+- Change maximum tag size of SESAME 5 / SESAME 5 PRO to 29 (was 30)
+- Do not send extra null bytes following the command tag on OS3.
+- Fixed an issue operations cannot continue after received (and ignored) a long packet.
+
 ## [0.9.0] 2023-09-14 (A.R.E.)
 
 ### Major changes

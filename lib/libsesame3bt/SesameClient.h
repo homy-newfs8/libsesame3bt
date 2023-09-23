@@ -5,6 +5,7 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <ctime>
 #include <utility>
 #include "Sesame.h"
 #include "SesameInfo.h"
@@ -129,9 +130,16 @@ class SesameClient : private NimBLEClientCallbacks {
 		                                               {5.55f, 40.0f},  {5.50f, 32.0f}, {5.40f, 21.0f}, {5.20f, 13.0f},
 		                                               {5.10f, 10.0f},  {5.0f, 7.0f},   {4.8f, 3.0f},   {4.6f, 0.0f}};
 	};
+	struct History {
+		Sesame::history_type_t type;
+		time_t time;
+		uint8_t tag_len;
+		char tag[Handler::MAX_HISTORY_TAG_SIZE + 1];
+	};
 
 	using status_callback_t = std::function<void(SesameClient& client, SesameClient::Status status)>;
 	using state_callback_t = std::function<void(SesameClient& client, SesameClient::state_t state)>;
+	using history_callback_t = std::function<void(SesameClient& client, const SesameClient::History& history)>;
 
 	static constexpr size_t PK_SIZE = c::PK_SIZE;
 	static constexpr size_t SECRET_SIZE = c::SECRET_SIZE;
@@ -147,9 +155,11 @@ class SesameClient : private NimBLEClientCallbacks {
 	bool unlock(const char* tag);
 	bool lock(const char* tag);
 	bool click(const char* tag);
+	bool request_history();
 	bool is_session_active() const { return state.load() == state_t::active; }
 	void set_status_callback(status_callback_t callback);
 	void set_state_callback(state_callback_t callback);
+	void set_history_callback(history_callback_t callback) { history_callback = callback; }
 	Sesame::model_t get_model() const { return model; }
 	state_t get_state() const { return state.load(); }
 	void set_connect_timeout_sec(uint8_t timeout) { connect_timeout = timeout; }
@@ -158,7 +168,7 @@ class SesameClient : private NimBLEClientCallbacks {
  private:
 	friend class OS2Handler;
 	friend class OS3Handler;
-	static constexpr size_t MAX_RECV = 40;
+	static constexpr size_t MAX_RECV = 128;
 	static inline const BLEUUID TxUUID{"16860002-a5ae-9856-b6d3-dbb4c676993e"};
 	static inline const BLEUUID RxUUID{"16860003-a5ae-9856-b6d3-dbb4c676993e"};
 
@@ -189,7 +199,8 @@ class SesameClient : private NimBLEClientCallbacks {
 	std::variant<LockSetting, BotSetting> setting;
 	Status sesame_status;
 	status_callback_t lock_status_callback{};
-	state_callback_t state_callback = nullptr;
+	state_callback_t state_callback{};
+	history_callback_t history_callback{};
 	Sesame::model_t model;
 	uint8_t connect_timeout = 30;
 	std::optional<Handler> handler;
@@ -208,6 +219,8 @@ class SesameClient : private NimBLEClientCallbacks {
 	void handle_response_login();
 	void fire_status_callback();
 	void update_state(state_t new_state);
+	void fire_history_callback(const History& history);
+	bool send_cmd_with_tag(Sesame::item_code_t code, const char* tag);
 
 	// NimBLEClientCallbacks
 	virtual void onDisconnect(NimBLEClient* pClient) override;
