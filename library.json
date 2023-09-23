@@ -1,6 +1,6 @@
 {
 	"name": "libsesame3bt",
-	"version": "0.9.0",
+	"version": "0.10.0",
 	"description": "Bluetooth LE access library for CANDY HOUSE SESAME 5 / SESAME 5 PRO / SESAME 3 / SESAME 4 / SESAME bot / SESAME 3 bike (SESAME Cycle)\nNeeds C++17 environment.",
 	"license": "MIT AND Apache-2.0",
 	"frameworks": "Arduino",
