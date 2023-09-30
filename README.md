@@ -8,7 +8,7 @@ platformio.ini
 platform = espressif32
 framework = arduino
 lib_deps =
-	https://github.com/homy-newfs8/libsesame3bt#0.10.0
+	https://github.com/homy-newfs8/libsesame3bt#0.11.0
 build_flags =
 	-std=gnu++17
 build_unflags =

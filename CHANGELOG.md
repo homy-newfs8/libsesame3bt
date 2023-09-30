@@ -1,15 +1,16 @@
 # Changelog
 
-# [0.11.0] 2023-10-30
+# [0.11.0] 2023-09-30
 
 ### Major changes
 
 - Make `SesameInfo` fields to const.
 - Change field name `SesameInfo::advertizement` to `SesameInfo::advertised_device`.
+- `SesameScanner` can retrieve correct UUID from Touch / Touch PRO devices (However operations are not supported as before).
 
 ### Minor changes
 
-- Extract BLE advertisement/name parsing functionality to public static function `SesameScanner::parse_advertisement()`.
+- Parsing BLE advertisement/name functionality to public static function `SesameScanner::parse_advertisement()`.
 - `lock()`, `unlock()`, `click()` will not crash when nullptr passed.
 
 # [0.10.0] 2023-09-23
