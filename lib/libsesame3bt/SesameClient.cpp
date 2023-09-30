@@ -328,8 +328,10 @@ SesameClient::fire_history_callback(const History& history) {
 bool
 SesameClient::send_cmd_with_tag(Sesame::item_code_t code, const char* tag) {
 	std::array<char, 1 + Handler::MAX_HISTORY_TAG_SIZE> tagchars{};
-	tagchars[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
-	std::copy(tag, tag + tagchars[0], &tagchars[1]);
+	if (tag) {
+		tagchars[0] = util::truncate_utf8(tag, handler->get_max_history_tag_size());
+		std::copy(tag, tag + tagchars[0], &tagchars[1]);
+	}
 	auto tagbytes = reinterpret_cast<std::byte*>(tagchars.data());
 	return handler->send_command(Sesame::op_code_t::async, code, tagbytes, handler->get_cmd_tag_size(tagbytes), true);
 }

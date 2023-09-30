@@ -10,6 +10,7 @@
 ### Minor changes
 
 - Extract BLE advertisement/name parsing functionality to public static function `SesameScanner::parse_advertisement()`.
+- `lock()`, `unlock()`, `click()` will not crash when nullptr passed.
 
 # [0.10.0] 2023-09-23
 
