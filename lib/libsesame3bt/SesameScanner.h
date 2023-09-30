@@ -1,5 +1,6 @@
 #pragma once
 #include <NimBLEDevice.h>
+#include <tuple>
 #include "SesameInfo.h"
 
 namespace libsesame3bt {
@@ -19,6 +20,9 @@ class SesameScanner : private NimBLEAdvertisedDeviceCallbacks {
 	SesameScanner& operator=(const SesameScanner&) = delete;
 	SesameScanner(SesameScanner&&) = delete;
 	SesameScanner& operator=(SesameScanner&&) = delete;
+	static std::tuple<Sesame::model_t, std::byte, bool> parse_advertisement(const std::string& manufactureData,
+	                                                                        const std::string& name,
+	                                                                        uint8_t (&uuid)[16]);
 
  private:
 	friend void scan_completed_handler(NimBLEScanResults);

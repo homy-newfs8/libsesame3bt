@@ -10,8 +10,8 @@ class SesameInfo {
 
  public:
 	SesameInfo() = delete;
-	BLEAddress address;
-	Sesame::model_t model = Sesame::model_t::unknown;
+	const BLEAddress address;
+	const Sesame::model_t model;
 	union flags_t {
 		struct {
 			bool registered : 1;
@@ -19,17 +19,17 @@ class SesameInfo {
 		};
 		std::byte v;
 		flags_t(std::byte _v) : v(_v) {}
-	} flags;
-	BLEUUID uuid;
-	NimBLEAdvertisedDevice& advertizement;
+	} const flags;
+	const BLEUUID uuid;
+	const NimBLEAdvertisedDevice& advertised_device;
 
  private:
 	SesameInfo(const BLEAddress& _address,
 	           Sesame::model_t _model,
 	           std::byte flags_byte,
 	           const BLEUUID& _uuid,
-	           NimBLEAdvertisedDevice* _advertizement)
-	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertizement(*_advertizement) {}
+	           NimBLEAdvertisedDevice& _adv)
+	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertised_device(_adv) {}
 };
 
 }  // namespace libsesame3bt

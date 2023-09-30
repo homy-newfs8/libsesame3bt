@@ -1,5 +1,16 @@
 # Changelog
 
+# [0.11.0] 2023-10-30
+
+### Major changes
+
+- Make `SesameInfo` fields to const.
+- Change field name `SesameInfo::advertizement` to `SesameInfo::advertised_device`.
+
+### Minor changes
+
+- Extract BLE advertisement/name parsing functionality to public static function `SesameScanner::parse_advertisement()`.
+
 # [0.10.0] 2023-09-23
 
 ### Function added

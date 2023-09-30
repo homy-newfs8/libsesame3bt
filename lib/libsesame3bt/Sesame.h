@@ -99,6 +99,19 @@ class Sesame {
 		drive_clicked = 21,  // observed value
 	};
 
+	enum class os_ver_t : uint8_t { unknown = 0, os2 = 2, os3 = 3 };
+
+	static os_ver_t get_os_ver(model_t model) {
+		int8_t v = static_cast<int8_t>(model);
+		if (v < 0 || v > static_cast<int8_t>(model_t::ble_connector)) {
+			return os_ver_t::unknown;
+		} else if (v >= static_cast<int8_t>(model_t::sesame_3) && v <= static_cast<int8_t>(model_t::sesame_4)) {
+			return os_ver_t::os2;
+		} else {
+			return os_ver_t::os3;
+		}
+	}
+
 	union __attribute__((packed)) mecha_setting_t {
 		struct __attribute((packed)) {
 			int16_t lock_position;
