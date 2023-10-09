@@ -8,6 +8,9 @@ class Sesame {
  public:
 	static constexpr size_t TOKEN_SIZE = 4;
 	static inline const BLEUUID SESAME3_SRV_UUID{"0000fd81-0000-1000-8000-00805f9b34fb"};
+	static constexpr size_t PK_SIZE = 64;
+	static constexpr size_t SECRET_SIZE = 16;
+	static constexpr size_t CMAC_TAG_SIZE = 4;
 
 	enum class model_t : int8_t {
 		unknown = -1,

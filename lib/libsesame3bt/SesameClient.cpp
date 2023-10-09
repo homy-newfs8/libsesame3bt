@@ -16,7 +16,7 @@ namespace libsesame3bt {
 
 namespace {
 
-constexpr size_t TAG_SIZE = 4;
+constexpr size_t CMAC_TAG_SIZE = 4;
 constexpr size_t AES_KEY_SIZE = 16;
 constexpr size_t FRAGMENT_SIZE = 19;
 constexpr size_t AUTH_TAG_TRUNCATED_SIZE = 4;
@@ -94,7 +94,8 @@ SesameClient::set_keys(const char* pk_str, const char* secret_str) {
 }
 
 bool
-SesameClient::set_keys(const std::array<std::byte, PK_SIZE>& public_key, const std::array<std::byte, SECRET_SIZE>& secret_key) {
+SesameClient::set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+                       const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key) {
 	if (!handler) {
 		DEBUG_PRINTLN("begin() not finished");
 		return false;
@@ -178,13 +179,13 @@ SesameClient::send_data(std::byte* pkt, size_t pkt_size, bool is_crypted) {
 
 bool
 SesameClient::decrypt(const std::byte* in, size_t in_len, std::byte* out, size_t out_size) {
-	if (in_len < TAG_SIZE || out_size < in_len - TAG_SIZE) {
+	if (in_len < CMAC_TAG_SIZE || out_size < in_len - CMAC_TAG_SIZE) {
 		return false;
 	}
 	int mbrc;
-	if ((mbrc = mbedtls_ccm_auth_decrypt(&ccm_ctx, in_len - TAG_SIZE, to_cptr(dec_iv), dec_iv.size(), to_cptr(auth_add_data),
-	                                     auth_add_data.size(), to_cptr(in), to_ptr(out), to_cptr(&in[in_len - TAG_SIZE]),
-	                                     TAG_SIZE)) != 0) {
+	if ((mbrc = mbedtls_ccm_auth_decrypt(&ccm_ctx, in_len - CMAC_TAG_SIZE, to_cptr(dec_iv), dec_iv.size(), to_cptr(auth_add_data),
+	                                     auth_add_data.size(), to_cptr(in), to_ptr(out), to_cptr(&in[in_len - CMAC_TAG_SIZE]),
+	                                     CMAC_TAG_SIZE)) != 0) {
 		DEBUG_PRINTF("%d: auth_decrypt failed\n", mbrc);
 		return false;
 	}
@@ -194,12 +195,13 @@ SesameClient::decrypt(const std::byte* in, size_t in_len, std::byte* out, size_t
 
 bool
 SesameClient::encrypt(const std::byte* in, size_t in_len, std::byte* out, size_t out_size) {
-	if (out_size < in_len + TAG_SIZE) {
+	if (out_size < in_len + CMAC_TAG_SIZE) {
 		return false;
 	}
 	int rc;
 	if ((rc = mbedtls_ccm_encrypt_and_tag(&ccm_ctx, in_len, to_cptr(enc_iv), enc_iv.size(), to_cptr(auth_add_data),
-	                                      auth_add_data.size(), to_cptr(in), to_ptr(out), to_ptr(&out[in_len]), TAG_SIZE)) != 0) {
+	                                      auth_add_data.size(), to_cptr(in), to_ptr(out), to_ptr(&out[in_len]), CMAC_TAG_SIZE)) !=
+	    0) {
 		DEBUG_PRINTF("%d: encrypt_and_tag failed\n", rc);
 	}
 	handler->update_enc_iv();
@@ -239,7 +241,7 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 	}
 	skipping = true;
 	if (h.kind == packet_kind_t::encrypted) {
-		if (recv_size < TAG_SIZE) {
+		if (recv_size < CMAC_TAG_SIZE) {
 			DEBUG_PRINTLN("Encrypted message too short");
 			return;
 		}
@@ -247,12 +249,12 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 			DEBUG_PRINTLN("Encrypted message received before key sharing");
 			return;
 		}
-		std::array<std::byte, MAX_RECV - TAG_SIZE> decrypted{};
-		if (!decrypt(recv_buffer.data(), recv_size, &decrypted[0], recv_size - TAG_SIZE)) {
+		std::array<std::byte, MAX_RECV - CMAC_TAG_SIZE> decrypted{};
+		if (!decrypt(recv_buffer.data(), recv_size, &decrypted[0], recv_size - CMAC_TAG_SIZE)) {
 			return;
 		}
-		std::copy(decrypted.cbegin(), decrypted.cbegin() + recv_size - TAG_SIZE, &recv_buffer[0]);
-		recv_size -= TAG_SIZE;
+		std::copy(decrypted.cbegin(), decrypted.cbegin() + recv_size - CMAC_TAG_SIZE, &recv_buffer[0]);
+		recv_size -= CMAC_TAG_SIZE;
 	} else if (h.kind != packet_kind_t::plain) {
 		DEBUG_PRINTF("%u: Unexpected packet kind\n", static_cast<uint8_t>(h.kind));
 		return;

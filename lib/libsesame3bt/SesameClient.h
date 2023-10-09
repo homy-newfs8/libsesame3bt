@@ -141,14 +141,12 @@ class SesameClient : private NimBLEClientCallbacks {
 	using state_callback_t = std::function<void(SesameClient& client, SesameClient::state_t state)>;
 	using history_callback_t = std::function<void(SesameClient& client, const SesameClient::History& history)>;
 
-	static constexpr size_t PK_SIZE = c::PK_SIZE;
-	static constexpr size_t SECRET_SIZE = c::SECRET_SIZE;
 	SesameClient();
 	SesameClient(const SesameClient&) = delete;
 	SesameClient& operator=(const SesameClient&) = delete;
 	virtual ~SesameClient();
 	bool begin(const BLEAddress& address, Sesame::model_t model);
-	bool set_keys(const std::array<std::byte, PK_SIZE>& public_key, const std::array<std::byte, SECRET_SIZE>& secret_key);
+	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key, const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key);
 	bool set_keys(const char* pk_str, const char* secret_str);
 	bool connect(int retry = 0);
 	void disconnect();

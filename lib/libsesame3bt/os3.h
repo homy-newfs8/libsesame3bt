@@ -3,7 +3,6 @@
 #include <cstdint>
 #include "Sesame.h"
 #include "api_wrapper.h"
-#include "handler_consts.h"
 
 namespace libsesame3bt {
 
@@ -16,7 +15,8 @@ class OS3Handler {
 	OS3Handler& operator=(const OS3Handler&) = delete;
 	bool init() { return true; }
 	bool set_keys(const char* pk_str, const char* secret_str);
-	bool set_keys(const std::array<std::byte, c::PK_SIZE>& public_key, const std::array<std::byte, c::SECRET_SIZE>& secret_key);
+	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+	              const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key);
 	bool send_command(Sesame::op_code_t op_code,
 	                  Sesame::item_code_t item_code,
 	                  const std::byte* data,
@@ -36,7 +36,7 @@ class OS3Handler {
 
  private:
 	SesameClient* client;
-	std::array<std::byte, c::SECRET_SIZE> sesame_secret{};
+	std::array<std::byte, Sesame::SECRET_SIZE> sesame_secret{};
 	long long enc_count = 0;
 	long long dec_count = 0;
 	bool setting_received = false;

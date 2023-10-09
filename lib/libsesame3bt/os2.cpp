@@ -1,6 +1,7 @@
 #include "os2.h"
 #include <mbedtls/cmac.h>
 #include <mbedtls/ecdh.h>
+#include "Sesame.h"
 #include "SesameClient.h"
 #include "util.h"
 
@@ -40,12 +41,12 @@ OS2Handler::set_keys(const char* pk_str, const char* secret_str) {
 		DEBUG_PRINTLN("Both pk_str and secret_str must be specified");
 		return false;
 	}
-	std::array<std::byte, c::SECRET_SIZE> secret;
+	std::array<std::byte, Sesame::SECRET_SIZE> secret;
 	if (!util::hex2bin(secret_str, secret)) {
 		DEBUG_PRINTLN("secret_str invalid format");
 		return false;
 	}
-	std::array<std::byte, c::PK_SIZE> pk;
+	std::array<std::byte, Sesame::PK_SIZE> pk;
 	if (!util::hex2bin(pk_str, pk)) {
 		DEBUG_PRINTLN("pk_str invalid format");
 		return false;
@@ -56,9 +57,10 @@ OS2Handler::set_keys(const char* pk_str, const char* secret_str) {
 }
 
 bool
-OS2Handler::set_keys(const std::array<std::byte, c::PK_SIZE>& public_key, const std::array<std::byte, c::SECRET_SIZE>& secret_key) {
-	std::array<std::byte, 1 + c::PK_SIZE> bin_pk;  // 1 for indicator (SEC1 2.3.4)
-	bin_pk[0] = std::byte{4};                      // uncompressed point indicator
+OS2Handler::set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+                     const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key) {
+	std::array<std::byte, 1 + Sesame::PK_SIZE> bin_pk;  // 1 for indicator (SEC1 2.3.4)
+	bin_pk[0] = std::byte{4};                           // uncompressed point indicator
 	std::copy(std::cbegin(public_key), std::cend(public_key), &bin_pk[1]);
 	int mbrc;
 	if ((mbrc = mbedtls_ecp_point_read_binary(&ec_grp, &sesame_pk, to_cptr(bin_pk), bin_pk.size())) != 0) {
@@ -81,7 +83,7 @@ OS2Handler::send_command(Sesame::op_code_t op_code,
                          const std::byte* data,
                          size_t data_size,
                          bool is_crypted) {
-	const size_t pkt_size = 2 + data_size + (is_crypted ? c::TAG_SIZE : 0);  // 2 for op/item, 4 for encrypted tag
+	const size_t pkt_size = 2 + data_size + (is_crypted ? Sesame::CMAC_TAG_SIZE : 0);  // 2 for op/item, 4 for encrypted tag
 	std::byte pkt[pkt_size];
 	if (is_crypted) {
 		std::byte plain[2 + data_size];
@@ -134,7 +136,7 @@ OS2Handler::handle_publish_initial(const std::byte* in, size_t in_len) {
 		return;
 	}
 
-	std::array<std::byte, 1 + c::PK_SIZE> bpk;
+	std::array<std::byte, 1 + Sesame::PK_SIZE> bpk;
 	if (!generate_session_key(local_tok, msg->token, bpk)) {
 		client->disconnect();
 		return;
@@ -146,7 +148,7 @@ OS2Handler::handle_publish_initial(const std::byte* in, size_t in_len) {
 		return;
 	}
 
-	constexpr size_t resp_size = sesame_ki.size() + c::PK_SIZE + local_tok.size() + AUTH_TAG_TRUNCATED_SIZE;
+	constexpr size_t resp_size = sesame_ki.size() + Sesame::PK_SIZE + local_tok.size() + AUTH_TAG_TRUNCATED_SIZE;
 	std::array<std::byte, resp_size> resp;
 
 	// resp = sesame_ki + pk + local_tok + tag_response[:4]
@@ -273,7 +275,7 @@ OS2Handler::handle_publish_mecha_status(const std::byte* in, size_t in_len) {
 bool
 OS2Handler::generate_session_key(const std::array<std::byte, Sesame::TOKEN_SIZE>& local_tok,
                                  const std::byte (&sesame_token)[Sesame::TOKEN_SIZE],
-                                 std::array<std::byte, 1 + c::PK_SIZE>& pk) {
+                                 std::array<std::byte, 1 + Sesame::PK_SIZE>& pk) {
 	api_wrapper<mbedtls_cipher_context_t> ctx{mbedtls_cipher_init, mbedtls_cipher_free};
 	api_wrapper<mbedtls_mpi> sk{mbedtls_mpi_init, mbedtls_mpi_free};
 
@@ -330,7 +332,7 @@ OS2Handler::init_endec_iv(const std::array<std::byte, Sesame::TOKEN_SIZE>& local
 }
 
 bool
-OS2Handler::create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, 1 + c::PK_SIZE>& bin_pk) {
+OS2Handler::create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, 1 + Sesame::PK_SIZE>& bin_pk) {
 	api_wrapper<mbedtls_mpi> temp_sk{mbedtls_mpi_init, mbedtls_mpi_free};
 	api_wrapper<mbedtls_ecp_point> point{mbedtls_ecp_point_init, mbedtls_ecp_point_free};
 
@@ -386,7 +388,7 @@ OS2Handler::ecdh(const api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, SK_SI
 }
 
 bool
-OS2Handler::generate_tag_response(const std::array<std::byte, 1 + c::PK_SIZE>& bpk,
+OS2Handler::generate_tag_response(const std::array<std::byte, 1 + Sesame::PK_SIZE>& bpk,
                                   const std::array<std::byte, Sesame::TOKEN_SIZE>& local_tok,
                                   const std::byte (&sesame_token)[4],
                                   std::array<std::byte, AES_BLOCK_SIZE>& tag_response) {

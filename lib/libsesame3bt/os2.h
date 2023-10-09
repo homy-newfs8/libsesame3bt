@@ -6,7 +6,6 @@
 #include <cstdint>
 #include "Sesame.h"
 #include "api_wrapper.h"
-#include "handler_consts.h"
 
 namespace libsesame3bt {
 
@@ -19,7 +18,8 @@ class OS2Handler {
 	OS2Handler& operator=(const OS2Handler&) = delete;
 	bool init() { return static_initialized; }
 	bool set_keys(const char* pk_str, const char* secret_str);
-	bool set_keys(const std::array<std::byte, c::PK_SIZE>& public_key, const std::array<std::byte, c::SECRET_SIZE>& secret_key);
+	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+	              const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key);
 	bool send_command(Sesame::op_code_t op_code,
 	                  Sesame::item_code_t item_code,
 	                  const std::byte* data,
@@ -40,7 +40,7 @@ class OS2Handler {
  private:
 	SesameClient* client;
 	api_wrapper<mbedtls_ecp_point> sesame_pk{mbedtls_ecp_point_init, mbedtls_ecp_point_free};
-	std::array<std::byte, c::SECRET_SIZE> sesame_secret{};
+	std::array<std::byte, Sesame::SECRET_SIZE> sesame_secret{};
 	long long enc_count = 0;
 	long long dec_count = 0;
 
@@ -54,12 +54,12 @@ class OS2Handler {
 
 	bool generate_session_key(const std::array<std::byte, Sesame::TOKEN_SIZE>& local_tok,
 	                          const std::byte (&sesame_token)[Sesame::TOKEN_SIZE],
-	                          std::array<std::byte, 1 + c::PK_SIZE>& pk);
+	                          std::array<std::byte, 1 + Sesame::PK_SIZE>& pk);
 	void init_endec_iv(const std::array<std::byte, Sesame::TOKEN_SIZE>& local_tok,
 	                   const std::byte (&sesame_token)[Sesame::TOKEN_SIZE]);
 	bool ecdh(const api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, SK_SIZE>& out);
-	bool create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, 1 + c::PK_SIZE>& pk);
-	bool generate_tag_response(const std::array<std::byte, 1 + c::PK_SIZE>& pk,
+	bool create_key_pair(api_wrapper<mbedtls_mpi>& sk, std::array<std::byte, 1 + Sesame::PK_SIZE>& pk);
+	bool generate_tag_response(const std::array<std::byte, 1 + Sesame::PK_SIZE>& pk,
 	                           const std::array<std::byte, Sesame::TOKEN_SIZE>& local_token,
 	                           const std::byte (&sesame_token)[Sesame::TOKEN_SIZE],
 	                           std::array<std::byte, AES_BLOCK_SIZE>& tag_response);

@@ -1,5 +1,6 @@
 #include "os3.h"
 #include <mbedtls/cmac.h>
+#include "Sesame.h"
 #include "SesameClient.h"
 #include "util.h"
 
@@ -25,7 +26,7 @@ OS3Handler::set_keys(const char* pk_str, const char* secret_str) {
 		DEBUG_PRINTLN("secret_str must be specified");
 		return false;
 	}
-	std::array<std::byte, c::SECRET_SIZE> secret;
+	std::array<std::byte, Sesame::SECRET_SIZE> secret;
 	if (!util::hex2bin(secret_str, secret)) {
 		DEBUG_PRINTLN("secret_str invalid format");
 		return false;
@@ -36,7 +37,8 @@ OS3Handler::set_keys(const char* pk_str, const char* secret_str) {
 }
 
 bool
-OS3Handler::set_keys(const std::array<std::byte, c::PK_SIZE>& public_key, const std::array<std::byte, c::SECRET_SIZE>& secret_key) {
+OS3Handler::set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+                     const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key) {
 	std::copy(std::cbegin(secret_key), std::cend(secret_key), std::begin(sesame_secret));
 	client->is_key_set = true;
 
@@ -49,7 +51,7 @@ OS3Handler::send_command(Sesame::op_code_t op_code,
                          const std::byte* data,
                          size_t data_size,
                          bool is_crypted) {
-	const size_t pkt_size = 1 + data_size + (is_crypted ? c::TAG_SIZE : 0);  // 1 for item, 4 for encrypted tag
+	const size_t pkt_size = 1 + data_size + (is_crypted ? Sesame::CMAC_TAG_SIZE : 0);  // 1 for item, 4 for encrypted tag
 	std::byte pkt[pkt_size];
 	if (is_crypted) {
 		std::byte plain[1 + data_size];

@@ -2,7 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <variant>
-#include "handler_consts.h"
+#include "Sesame.h"
 #include "os2.h"
 #include "os3.h"
 
@@ -18,7 +18,8 @@ class Handler {
 	bool set_keys(const char* pk_str, const char* secret_str) {
 		return std::visit([pk_str, secret_str](auto& v) { return v.set_keys(pk_str, secret_str); }, handler);
 	}
-	bool set_keys(const std::array<std::byte, c::PK_SIZE>& public_key, const std::array<std::byte, c::SECRET_SIZE>& secret_key) {
+	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+	              const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key) {
 		return std::visit([public_key, secret_key](auto& v) { return v.set_keys(public_key, secret_key); }, handler);
 	}
 	bool send_command(Sesame::op_code_t op_code,
