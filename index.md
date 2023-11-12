@@ -66,5 +66,8 @@ void do_unlock_lock() {
 <iframe width="560" height="315" src="https://www.youtube.com/embed/iC5dZ8WWqk4?cc_load_policy=1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 </div>
 
+# Integrate to your Home Automation system without code
+* ESPHome External Component [esphome-sesame3](https://github.com/homy-newfs8/esphome-sesame3)
+
 # License
 MIT AND Apache-2.0
