@@ -82,7 +82,7 @@ class Sesame {
 	};
 	enum class history_type_t : uint8_t {
 		none = 0,
-		ble_lock = 1,
+		ble_lock = 1,  ///< SESAMEへBT APIで
 		ble_unlock,
 		time_changed,
 		autolock_updated,
@@ -95,7 +95,7 @@ class Sesame {
 		drive_unlocked,
 		drive_failed,
 		ble_adv_param_updated,
-		wm2_lock,
+		wm2_lock,  ///< セサミアプリからBT→WM2⇒SESAME、セサミアプリから WiFi→(Web)→WM2⇒SESAME
 		wm2_unlock,
 		web_lock,
 		web_unlock,

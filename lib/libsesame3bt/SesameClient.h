@@ -16,7 +16,7 @@
 namespace libsesame3bt {
 
 /**
- * @brief セサミ操作クラス
+ * @brief Sesame client
  *
  */
 class SesameClient : private NimBLEClientCallbacks {
@@ -24,6 +24,10 @@ class SesameClient : private NimBLEClientCallbacks {
 	enum class state_t : uint8_t { idle, connected, authenticating, active };
 	static constexpr size_t MAX_CMD_TAG_SIZE = Handler::MAX_HISTORY_TAG_SIZE;
 
+	/**
+   * @brief Lock device setting
+   *
+   */
 	class LockSetting {
 	 public:
 		LockSetting() {}
@@ -42,22 +46,60 @@ class SesameClient : private NimBLEClientCallbacks {
 		int16_t _auto_lock_sec = 0;
 	};
 
+	/**
+   * @brief bot device setting
+   *
+   */
 	class BotSetting {
 	 public:
 		BotSetting() : setting{} {}
 		BotSetting(const Sesame::mecha_setting_t& setting) : setting(setting) {}
-
+		/**
+		 * @brief First rotation direction on @link libsesame3bt::SesameClient::click click @endlink operation
+		 *
+		 * @return 0: push, 1: pull
+		 */
 		uint8_t user_pref_dir() const { return setting.bot.user_pref_dir; }
+		/**
+		 * @brief Lock time
+		 *
+		 * @return Rotation time in 1/10 seconds unit
+		 */
 		uint8_t lock_sec() const { return setting.bot.lock_sec; }
+		/**
+		 * @brief Unlock time
+		 *
+		 * @return Rotation time in 1/10 seconds unit
+		 */
 		uint8_t unlock_sec() const { return setting.bot.unlock_sec; }
+		/**
+		 * @brief Lock time on @link libsesame3bt::SesameClient::click click @endlink operation
+		 *
+		 * @return Rotation time in 1/10 seconds unit
+		 */
 		uint8_t click_lock_sec() const { return setting.bot.click_lock_sec; }
+		/**
+		 * @brief Unlock time on @link libsesame3bt::SesameClient::click click @endlink operation
+		 *
+		 * @return Rotation time in 1/10 seconds unit
+		 */
 		uint8_t click_unlock_sec() const { return setting.bot.click_unlock_sec; }
+		/**
+		 * @brief Hold time on @link libsesame3bt::SesameClient::click click @endlink operation
+		 *
+		 * @return Rotation time in 1/10 seconds unit
+		 */
 		uint8_t click_hold_sec() const { return setting.bot.click_hold_sec; }
 		uint8_t button_mode() const { return setting.bot.button_mode; }
 
 	 private:
 		Sesame::mecha_setting_t setting;
 	};
+
+	/**
+   * @brief Device status
+   *
+   */
 	class Status {
 	 public:
 		Status() {}
@@ -130,6 +172,11 @@ class SesameClient : private NimBLEClientCallbacks {
 		                                               {5.55f, 40.0f},  {5.50f, 32.0f}, {5.40f, 21.0f}, {5.20f, 13.0f},
 		                                               {5.10f, 10.0f},  {5.0f, 7.0f},   {4.8f, 3.0f},   {4.6f, 0.0f}};
 	};
+
+	/**
+   * @brief Operation history entry
+   *
+   */
 	struct History {
 		Sesame::history_type_t type;
 		time_t time;
@@ -146,12 +193,19 @@ class SesameClient : private NimBLEClientCallbacks {
 	SesameClient& operator=(const SesameClient&) = delete;
 	virtual ~SesameClient();
 	bool begin(const BLEAddress& address, Sesame::model_t model);
-	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key, const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key);
+	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
+	              const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key);
 	bool set_keys(const char* pk_str, const char* secret_str);
 	bool connect(int retry = 0);
 	void disconnect();
 	bool unlock(const char* tag);
 	bool lock(const char* tag);
+	/**
+	 * @brief Click operation (for Bot only)
+	 *
+	 * @param tag %History tag (But it seems not recorded in bot)
+	 * @return True if the command sent successfully
+	 */
 	bool click(const char* tag);
 	bool request_history();
 	bool is_session_active() const { return state.load() == state_t::active; }
