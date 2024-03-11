@@ -3,9 +3,9 @@
  * SesameのBluetoothアドレスを指定して接続する場合
  */
 #include <Arduino.h>
-#include <Sesame.h>
+#include <NimBLEDevice.h>
 #include <SesameClient.h>
-#include <SesameScanner.h>
+#include <libsesame3bt/Sesame.h>
 // Sesame鍵情報設定用インクルードファイル
 // 数行下で SESAME_SECRET 等を直接定義する場合は別ファイルを用意する必要はない
 #if __has_include("mysesame-config.h")
@@ -160,6 +160,7 @@ loop() {
 		case app_state::pre_unlock:
 			// 認証が完了した
 			if (client.is_session_active()) {
+				Serial.println("is_active");
 				// SesameClientの状態が Sesame::state_t::active になると設定を読み出し可能
 				// 設定は接続完了時にのみ読み出されるため、接続後に他のアプリで変更された値を知ることはできない
 				// SESAME Bot とそれ以外では読み出される設定値クラスが異なる
@@ -192,6 +193,7 @@ loop() {
 					state = app_state::pre_lock;
 				}
 			} else {
+				Serial.println("not active");
 				// 接続後、認証失敗で切断されるとSesameClientの状態がidleになる
 				if (client.get_state() == SesameClient::state_t::idle) {
 					Serial.println("Failed to authenticate");

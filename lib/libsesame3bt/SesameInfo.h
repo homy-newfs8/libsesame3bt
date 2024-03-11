@@ -2,7 +2,8 @@
 #include <NimBLEDevice.h>
 #include <cstddef>
 #include <string>
-#include "Sesame.h"
+#include "libsesame3bt/Sesame.h"
+
 namespace libsesame3bt {
 
 class SesameInfo {
