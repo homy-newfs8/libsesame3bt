@@ -1,5 +1,11 @@
 # Changelog
 
+# [0.12.0] 2023-04-XX
+
+## Major changes
+
+- Split platform independent part to `libsesame3-core` library.
+
 # [0.11.0] 2023-09-30
 
 ### Major changes

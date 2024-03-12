@@ -1,5 +1,5 @@
 # libsesame3bt
-ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME 3 / SESAME 4 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
 
 # Usage
 platformio.ini

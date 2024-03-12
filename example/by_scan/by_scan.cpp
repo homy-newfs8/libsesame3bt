@@ -3,9 +3,9 @@
  * BluetoothスキャンしてSesameを探す場合
  */
 #include <Arduino.h>
+#include <Sesame.h>
 #include <SesameClient.h>
 #include <SesameScanner.h>
-#include <libsesame3bt/Sesame.h>
 // Sesame鍵情報設定用インクルードファイル
 // 数行下で SESAME_SECRET 等を直接定義する場合は別ファイルを用意する必要はない
 #if __has_include("mysesame-config.h")

@@ -1,8 +1,8 @@
 #pragma once
 #include <NimBLEDevice.h>
+#include <Sesame.h>
 #include <cstddef>
 #include <string>
-#include "libsesame3bt/Sesame.h"
 
 namespace libsesame3bt {
 

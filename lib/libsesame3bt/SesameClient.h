@@ -2,7 +2,7 @@
 
 #include <NimBLEClient.h>
 #include <NimBLEDevice.h>
-#include <libsesame3bt/core.h>
+#include <libsesame3bt/ClientCore.h>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -62,8 +62,6 @@ class SesameClient : private NimBLEClientCallbacks, public libsesame3bt::core::S
 
  private:
 	static constexpr size_t MAX_RECV = 128;
-	std::unique_ptr<libsesame3bt::core::SesameClientCore> core;
-
 	// Sesame info
 	BLEAddress address;
 	// session data
@@ -76,6 +74,8 @@ class SesameClient : private NimBLEClientCallbacks, public libsesame3bt::core::S
 	state_callback_t state_callback{};
 	history_callback_t history_callback{};
 	uint8_t connect_timeout = 30;
+
+	std::unique_ptr<libsesame3bt::core::SesameClientCore> core;
 
 	void notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* data, size_t size, bool is_notify);
 	void _status_callback(libsesame3bt::core::SesameClientCore& client, SesameClient::Status status);

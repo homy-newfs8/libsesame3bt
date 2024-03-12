@@ -11,7 +11,7 @@ namespace libsesame3bt {
 
 using SesameClientCore = core::SesameClientCore;
 
-SesameClient::SesameClient() : core(std::make_unique<SesameClientCore>(this)) {
+SesameClient::SesameClient() : core(std::make_unique<SesameClientCore>(*this)) {
 	core->set_state_callback([this](SesameClientCore& client, state_t state) { _state_callback(client, state); });
 	core->set_status_callback([this](SesameClientCore& client, Status status) { _status_callback(client, status); });
 	core->set_history_callback([this](SesameClientCore& client, const History& history) { _history_callback(client, history); });
@@ -26,7 +26,6 @@ SesameClient::~SesameClient() {
 
 bool
 SesameClient::write_to_tx(const uint8_t* data, size_t size) {
-	DEBUG_PRINTF("w_to_tx len=%u\n", size);
 	if (!blec || !tx) {
 		DEBUG_PRINTLN("ble or tx not initialized");
 		return false;
@@ -112,7 +111,6 @@ SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size
 	if (!is_notify || len <= 1) {
 		return;
 	}
-	DEBUG_PRINTF("notify_cb len=%u\n", len);
 	core->on_received(p, len);
 }
 

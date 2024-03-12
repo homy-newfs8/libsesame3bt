@@ -2,7 +2,7 @@
 SESAME 5(PRO)/3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ライブラリ
 
 ## 概要
-このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 5、SESAME 5 PRO、SESAME 3、SESAME 4、SESAME bot、SESAME サイクルを制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
+このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 5、SESAME 5 PRO、SESAME 4、SESAME 3、SESAME bot、SESAME サイクルを制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
 
 - SESAMEのスキャン
 - SESAME状態の受信

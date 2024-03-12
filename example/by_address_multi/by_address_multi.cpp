@@ -3,8 +3,8 @@
  * SesameのBluetoothアドレスがわかっている場合
  */
 #include <Arduino.h>
+#include <Sesame.h>
 #include <SesameClient.h>
-#include <libsesame3bt/Sesame.h>
 #include <algorithm>
 
 // Sesame鍵情報設定用インクルードファイル

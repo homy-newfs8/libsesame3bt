@@ -1,8 +1,8 @@
 #include "SesameScanner.h"
 #include <Arduino.h>
 #include <NimBLEDevice.h>
-#include "libsesame3bt/Sesame.h"
-#include "libsesame3bt/scanner.h"
+#include <Sesame.h>
+#include <libsesame3bt/ScannerCore.h>
 
 #ifndef LIBSESAME3BT_DEBUG
 #define LIBSESAME3BT_DEBUG 0
