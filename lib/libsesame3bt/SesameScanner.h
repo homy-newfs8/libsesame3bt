@@ -26,7 +26,6 @@ class SesameScanner : private NimBLEAdvertisedDeviceCallbacks {
 	scan_handler_t handler{};
 
 	void scan_completed(NimBLEScanResults results);
-	void scan_internal(uint32_t scan_duration);
 	virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
 
 	SesameScanner() = default;

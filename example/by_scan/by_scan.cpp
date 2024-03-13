@@ -1,4 +1,4 @@
-﻿/*
+/*
  * libasesame3btサンプル
  * BluetoothスキャンしてSesameを探す場合
  */
@@ -73,7 +73,7 @@ scan_and_init() {
 	// SesameScannerはシングルトン
 	SesameScanner& scanner = SesameScanner::get();
 
-	Serial.println(F("Scanning 10 seconds"));
+	Serial.println("Scanning 10 seconds");
 	std::vector<SesameInfo> results;
 
 	// SesameScanner::scanはスキャン完了までブロックする

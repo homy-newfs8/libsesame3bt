@@ -11,10 +11,11 @@ namespace libsesame3bt {
 
 using SesameClientCore = core::SesameClientCore;
 
-SesameClient::SesameClient() : core(std::make_unique<SesameClientCore>(*this)) {
-	core->set_state_callback([this](SesameClientCore& client, state_t state) { _state_callback(client, state); });
-	core->set_status_callback([this](SesameClientCore& client, Status status) { _status_callback(client, status); });
-	core->set_history_callback([this](SesameClientCore& client, const History& history) { _history_callback(client, history); });
+SesameClient::SesameClient() : SesameClientCore(static_cast<SesameClientBackend&>(*this)) {
+	SesameClientCore::set_state_callback([this](SesameClientCore& client, state_t state) { _state_callback(client, state); });
+	SesameClientCore::set_status_callback([this](SesameClientCore& client, Status status) { _status_callback(client, status); });
+	SesameClientCore::set_history_callback(
+	    [this](SesameClientCore& client, const History& history) { _history_callback(client, history); });
 }
 
 SesameClient::~SesameClient() {
@@ -47,7 +48,7 @@ SesameClient::disconnect() {
 bool
 SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
 	this->address = address;
-	return core->begin(model);
+	return SesameClientCore::begin(model);
 }
 
 bool
@@ -72,10 +73,10 @@ SesameClient::connect(int retry) {
 		if (rx->subscribe(
 		        true,
 		        [this](NimBLERemoteCharacteristic* ch, uint8_t* data, size_t size, bool isNotify) {
-			        notify_cb(ch, reinterpret_cast<std::byte*>(data), size, isNotify);
+			        ble_notify_callback(ch, reinterpret_cast<std::byte*>(data), size, isNotify);
 		        },
 		        true)) {
-			core->on_connected();
+			on_connected();
 			return true;
 		} else {
 			DEBUG_PRINTLN("Failed to subscribe RX char");
@@ -107,18 +108,18 @@ SesameClient::_history_callback(SesameClientCore& client, const SesameClient::Hi
 }
 
 void
-SesameClient::notify_cb(NimBLERemoteCharacteristic* ch, const std::byte* p, size_t len, bool is_notify) {
+SesameClient::ble_notify_callback(NimBLERemoteCharacteristic* ch, const std::byte* p, size_t len, bool is_notify) {
 	if (!is_notify || len <= 1) {
 		return;
 	}
-	core->on_received(p, len);
+	on_received(p, len);
 }
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient) {
 	DEBUG_PRINTLN("Bluetooth disconnected by peer");
 	disconnect();
-	core->on_disconnected();
+	on_disconnected();
 }
 
 }  // namespace libsesame3bt

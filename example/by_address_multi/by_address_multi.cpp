@@ -1,4 +1,4 @@
-﻿/*
+/*
  * libasesame3btマルチ接続サンプル
  * SesameのBluetoothアドレスがわかっている場合
  */
