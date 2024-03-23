@@ -12,7 +12,7 @@ namespace libsesame3bt {
  */
 class SesameClient : public core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameClientBackend {
  public:
-	using state_t = core::SesameClientCore::state_t;
+	using state_t = core::state_t;
 	static constexpr size_t MAX_CMD_TAG_SIZE = Sesame::MAX_HISTORY_TAG_SIZE;
 
 	using LockSetting = core::LockSetting;
@@ -20,7 +20,7 @@ class SesameClient : public core::SesameClientCore, private NimBLEClientCallback
 	using Status = core::Status;
 	using History = core::History;
 	using status_callback_t = std::function<void(SesameClient& client, Status status)>;
-	using state_callback_t = std::function<void(SesameClient& client, SesameClient::state_t state)>;
+	using state_callback_t = std::function<void(SesameClient& client, state_t state)>;
 	using history_callback_t = std::function<void(SesameClient& client, const History& history)>;
 
 	SesameClient();
@@ -50,10 +50,6 @@ class SesameClient : public core::SesameClientCore, private NimBLEClientCallback
 	history_callback_t history_callback{};
 	uint8_t connect_timeout = 30;
 
-	void ble_notify_callback(NimBLERemoteCharacteristic* ch, const std::byte* data, size_t size, bool is_notify);
-	void _status_callback(core::SesameClientCore& client, SesameClient::Status status);
-	void _state_callback(core::SesameClientCore& client, SesameClient::state_t state);
-	void _history_callback(core::SesameClientCore& client, const SesameClient::History& history);
 	virtual void onDisconnect(NimBLEClient* pClient) override;
 	virtual bool write_to_tx(const uint8_t* data, size_t size) override;
 };

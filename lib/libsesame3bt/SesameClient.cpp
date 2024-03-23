@@ -12,10 +12,18 @@ namespace libsesame3bt {
 using SesameClientCore = core::SesameClientCore;
 
 SesameClient::SesameClient() : SesameClientCore(static_cast<SesameClientBackend&>(*this)) {
-	SesameClientCore::set_state_callback([this](SesameClientCore& client, state_t state) { _state_callback(client, state); });
-	SesameClientCore::set_status_callback([this](SesameClientCore& client, Status status) { _status_callback(client, status); });
-	SesameClientCore::set_history_callback(
-	    [this](SesameClientCore& client, const History& history) { _history_callback(client, history); });
+	SesameClientCore::set_state_callback([this](auto&, state_t state) {
+		if (state_callback)
+			state_callback(*this, state);
+	});
+	SesameClientCore::set_status_callback([this](auto&, Status status) {
+		if (status_callback)
+			status_callback(*this, status);
+	});
+	SesameClientCore::set_history_callback([this](auto&, const History& history) {
+		if (history_callback)
+			history_callback(*this, history);
+	});
 }
 
 SesameClient::~SesameClient() {
@@ -73,7 +81,9 @@ SesameClient::connect(int retry) {
 		if (rx->subscribe(
 		        true,
 		        [this](NimBLERemoteCharacteristic* ch, uint8_t* data, size_t size, bool isNotify) {
-			        ble_notify_callback(ch, reinterpret_cast<std::byte*>(data), size, isNotify);
+			        if (!isNotify || size <= 1)
+				        return;
+			        on_received(reinterpret_cast<std::byte*>(data), size);
 		        },
 		        true)) {
 			on_connected();
@@ -86,33 +96,6 @@ SesameClient::connect(int retry) {
 	}
 	disconnect();
 	return false;
-}
-
-void
-SesameClient::_status_callback(SesameClientCore& client, SesameClient::Status status) {
-	if (status_callback) {
-		status_callback(*this, status);
-	}
-}
-void
-SesameClient::_state_callback(SesameClientCore& client, SesameClient::state_t state) {
-	if (state_callback) {
-		state_callback(*this, state);
-	}
-}
-void
-SesameClient::_history_callback(SesameClientCore& client, const SesameClient::History& history) {
-	if (history_callback) {
-		history_callback(*this, history);
-	}
-}
-
-void
-SesameClient::ble_notify_callback(NimBLERemoteCharacteristic* ch, const std::byte* p, size_t len, bool is_notify) {
-	if (!is_notify || len <= 1) {
-		return;
-	}
-	on_received(p, len);
 }
 
 void

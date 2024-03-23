@@ -10,7 +10,7 @@ platformio.ini
 platform = espressif32
 framework = arduino
 lib_deps =
-	https://github.com/homy-newfs8/libsesame3bt#0.12.0
+	https://github.com/homy-newfs8/libsesame3bt#0.13.0
 build_flags =
 	-std=gnu++17
 build_unflags =
@@ -69,11 +69,6 @@ void do_unlock_lock() {
 
 # Integrate to your Home Automation system without code
 * ESPHome External Component [esphome-sesame3](https://github.com/homy-newfs8/esphome-sesame3)
-
-# License
-MIT AND Apache-2.0
-
-Almost all code is licensed under MIT-style license. Files under [src/mbedtls-extra](src/mbedtls-extra) are licensed under Apache-2.0.
 
 # See Also
 [README.ja.md](README.ja.md)
