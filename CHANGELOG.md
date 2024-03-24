@@ -1,5 +1,10 @@
 # Changelog
 
+# [0.14.0] 2023-03-24
+
+- Update libsesame3bt-core library (v0.3.0)
+- Some interface accept std::string_view instead of const char *, but usage is almost same.
+
 # [0.13.0] 2023-03-23
 
 - Update libsesame3bt-core library
