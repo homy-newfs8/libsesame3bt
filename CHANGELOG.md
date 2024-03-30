@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.15.0] 2023-03-30
+
+- Update libsesame3bt-core (v0.4.0)
+
 # [0.14.0] 2023-03-24
 
 - Update libsesame3bt-core library (v0.3.0)

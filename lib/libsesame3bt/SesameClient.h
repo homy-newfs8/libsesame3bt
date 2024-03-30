@@ -12,7 +12,7 @@ namespace libsesame3bt {
  */
 class SesameClient : public core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameClientBackend {
  public:
-	using state_t = core::state_t;
+	enum class state_t { idle, connected, authenticating, active };
 	static constexpr size_t MAX_CMD_TAG_SIZE = Sesame::MAX_HISTORY_TAG_SIZE;
 
 	using LockSetting = core::LockSetting;
@@ -37,7 +37,6 @@ class SesameClient : public core::SesameClientCore, private NimBLEClientCallback
 
  private:
 	using SesameClientCore::begin;
-	using SesameClientCore::on_connected;
 	using SesameClientCore::on_disconnected;
 	using SesameClientCore::on_received;
 
@@ -48,7 +47,11 @@ class SesameClient : public core::SesameClientCore, private NimBLEClientCallback
 	status_callback_t status_callback{};
 	state_callback_t state_callback{};
 	history_callback_t history_callback{};
+	state_t state = state_t::idle;
 	uint8_t connect_timeout = 30;
+
+	void core_state_callback(core::SesameClientCore& core, core::state_t state);
+	void set_state(state_t state);
 
 	virtual void onDisconnect(NimBLEClient* pClient) override;
 	virtual bool write_to_tx(const uint8_t* data, size_t size) override;

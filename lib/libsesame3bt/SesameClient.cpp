@@ -12,10 +12,7 @@ namespace libsesame3bt {
 using SesameClientCore = core::SesameClientCore;
 
 SesameClient::SesameClient() : SesameClientCore(static_cast<SesameClientBackend&>(*this)) {
-	SesameClientCore::set_state_callback([this](auto&, state_t state) {
-		if (state_callback)
-			state_callback(*this, state);
-	});
+	SesameClientCore::set_state_callback([this](auto& core, auto state) { core_state_callback(core, state); });
 	SesameClientCore::set_status_callback([this](auto&, Status status) {
 		if (status_callback)
 			status_callback(*this, status);
@@ -30,6 +27,21 @@ SesameClient::~SesameClient() {
 	if (blec) {
 		blec->setClientCallbacks(nullptr, true);
 		NimBLEDevice::deleteClient(blec);
+	}
+}
+
+void
+SesameClient::core_state_callback(core::SesameClientCore& core, core::state_t state) {
+	switch (state) {
+		case core::state_t::idle:
+			set_state(state_t::idle);
+			break;
+		case core::state_t::authenticating:
+			set_state(state_t::authenticating);
+			break;
+		case core::state_t::active:
+			set_state(state_t::active);
+			break;
 	}
 }
 
@@ -59,6 +71,17 @@ SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
 	return SesameClientCore::begin(model);
 }
 
+void
+SesameClient::set_state(state_t state) {
+	if (state == this->state) {
+		return;
+	}
+	this->state = state;
+	if (state_callback) {
+		state_callback(*this, this->state);
+	}
+}
+
 bool
 SesameClient::connect(int retry) {
 	if (!blec) {
@@ -76,6 +99,7 @@ SesameClient::connect(int retry) {
 		}
 		delay(500);
 	}
+	set_state(state_t::connected);
 	auto srv = blec->getService(Sesame::SESAME3_SRV_UUID);
 	if (srv && (tx = srv->getCharacteristic(Sesame::TxUUID)) && (rx = srv->getCharacteristic(Sesame::RxUUID))) {
 		if (rx->subscribe(
@@ -86,7 +110,6 @@ SesameClient::connect(int retry) {
 			        on_received(reinterpret_cast<std::byte*>(data), size);
 		        },
 		        true)) {
-			on_connected();
 			return true;
 		} else {
 			DEBUG_PRINTLN("Failed to subscribe RX char");
