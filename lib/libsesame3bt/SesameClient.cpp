@@ -63,6 +63,7 @@ SesameClient::disconnect() {
 	blec->setClientCallbacks(nullptr, false);
 	NimBLEDevice::deleteClient(blec);
 	blec = nullptr;
+	on_disconnected();
 }
 
 bool
@@ -125,7 +126,6 @@ void
 SesameClient::onDisconnect(NimBLEClient* pClient) {
 	DEBUG_PRINTLN("Bluetooth disconnected by peer");
 	disconnect();
-	on_disconnected();
 }
 
 }  // namespace libsesame3bt

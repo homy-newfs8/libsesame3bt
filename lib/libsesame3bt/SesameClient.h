@@ -10,7 +10,7 @@ namespace libsesame3bt {
  * @brief Sesame client
  *
  */
-class SesameClient : public core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameClientBackend {
+class SesameClient : private core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameClientBackend {
  public:
 	enum class state_t { idle, connected, authenticating, active };
 	static constexpr size_t MAX_CMD_TAG_SIZE = Sesame::MAX_HISTORY_TAG_SIZE;
@@ -34,12 +34,18 @@ class SesameClient : public core::SesameClientCore, private NimBLEClientCallback
 	void set_status_callback(status_callback_t callback) { status_callback = callback; }
 	void set_state_callback(state_callback_t callback) { state_callback = callback; }
 	void set_history_callback(history_callback_t callback) { history_callback = callback; }
+	// warning: oveloading core method
+	state_t get_state() const { return state; }
+	using core::SesameClientCore::click;
+	using core::SesameClientCore::get_model;
+	using core::SesameClientCore::get_setting;
+	using core::SesameClientCore::is_session_active;
+	using core::SesameClientCore::lock;
+	using core::SesameClientCore::request_history;
+	using core::SesameClientCore::set_keys;
+	using core::SesameClientCore::unlock;
 
  private:
-	using SesameClientCore::begin;
-	using SesameClientCore::on_disconnected;
-	using SesameClientCore::on_received;
-
 	BLEAddress address;
 	NimBLEClient* blec = nullptr;
 	NimBLERemoteCharacteristic* tx = nullptr;
