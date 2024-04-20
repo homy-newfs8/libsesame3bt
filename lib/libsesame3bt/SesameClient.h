@@ -42,6 +42,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	using core::SesameClientCore::is_session_active;
 	using core::SesameClientCore::lock;
 	using core::SesameClientCore::request_history;
+	using core::SesameClientCore::request_status;
 	using core::SesameClientCore::set_keys;
 	using core::SesameClientCore::unlock;
 
