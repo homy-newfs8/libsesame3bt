@@ -1,5 +1,11 @@
 # Changelog
 
+# [0.17.0] 2023-04-28
+
+- Support SESAME Touch / Bike2 / Open Sensor (Tested on Touch only).
+- Add `request_status()` (handled on some devices: SESAME 5 seems not handle).
+- Add interactive example.
+
 # [0.16.0] 2023-04-01
 
 - Update libsesame3bt-core (v0.5.0)
