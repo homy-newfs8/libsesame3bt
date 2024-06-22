@@ -21,6 +21,11 @@ SesameClient::SesameClient() : SesameClientCore(static_cast<SesameClientBackend&
 		if (history_callback)
 			history_callback(*this, history);
 	});
+	SesameClientCore::set_registered_devices_callback([this](auto&, const auto& devs) {
+		if (registered_devices_callback) {
+			registered_devices_callback(*this, devs);
+		}
+	});
 }
 
 SesameClient::~SesameClient() {

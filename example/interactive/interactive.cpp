@@ -71,6 +71,18 @@ state_str(SesameClient::state_t state) {
 	}
 }
 
+static const char*
+os_str(Sesame::os_ver_t os) {
+	switch (os) {
+		case Sesame::os_ver_t::os2:
+			return "OS2";
+		case Sesame::os_ver_t::os3:
+			return "OS3";
+		default:
+			return "UNKNOWN";
+	}
+}
+
 // Sesameの状態通知コールバック
 // Sesameのつまみの位置、電圧、施錠開錠状態が通知される
 // Sesameからの通知がある毎に呼び出される(変化がある場合のみ通知されている模様)
@@ -105,6 +117,16 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	gmtime_r(&history.time, &tm);
 	Serial.printf("History type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s\n", static_cast<uint8_t>(history.type),
 	              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, history.tag_len, history.tag);
+}
+
+// 登録デバイス一覧コールバック
+// SESAME Touch / Remote に登録されている SESAME デバイスの一覧が通知される
+void
+receive_registered_devices(SesameClient& client, const std::vector<SesameClient::RegisteredDevice> devices) {
+	Serial.printf("%u devices registered:\n", devices.size());
+	for (const auto& dev : devices) {
+		Serial.printf("uuid=%s, os=%s\n", BLEUUID(dev.uuid, sizeof(dev.uuid), true).toString().c_str(), os_str(dev.os_ver));
+	}
 }
 
 void
@@ -142,6 +164,8 @@ setup() {
 	client.set_status_callback(status_update);
 	// 履歴受信コールバックを設定
 	client.set_history_callback(receive_history);
+	// 登録デバイス一覧コールバックを設定
+	client.set_registered_devices_callback(receive_registered_devices);
 }
 
 enum class app_state { init, wait_running, running, done };

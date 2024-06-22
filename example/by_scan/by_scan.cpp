@@ -6,6 +6,7 @@
 #include <Sesame.h>
 #include <SesameClient.h>
 #include <SesameScanner.h>
+#include <string>
 // Sesame鍵情報設定用インクルードファイル
 // 数行下で SESAME_SECRET 等を直接定義する場合は別ファイルを用意する必要はない
 #if __has_include("mysesame-config.h")
@@ -39,7 +40,7 @@ using libsesame3bt::SesameScanner;
 
 SesameClient client{};
 
-static const char*
+static std::string
 model_str(Sesame::model_t model) {
 	switch (model) {
 		case Sesame::model_t::sesame_3:
@@ -62,8 +63,12 @@ model_str(Sesame::model_t model) {
 			return "SESAME TOUCH PRO";
 		case Sesame::model_t::sesame_bike_2:
 			return "SESAME Cycle 2";
+		case Sesame::model_t::remote:
+			return "Remote";
+		case Sesame::model_t::remote_nano:
+			return "Remote nano";
 		default:
-			return "UNKNOWN";
+			return "UNKNOWN(" + std::to_string(static_cast<int8_t>(model)) + ")";
 	}
 }
 
@@ -86,7 +91,7 @@ scan_and_init() {
 	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info) {
 		if (_info) {  // nullptrの検査を実施
 			// 結果をコピーして results vector に格納する
-			Serial.printf("model=%s,addr=%s,UUID=%s,registered=%u\n", model_str(_info->model), _info->address.toString().c_str(),
+			Serial.printf("model=%s,addr=%s,UUID=%s,registered=%u\n", model_str(_info->model).c_str(), _info->address.toString().c_str(),
 			              _info->uuid.toString().c_str(), _info->flags.registered);
 			results.push_back(*_info);
 			// _scanner.stop(); // スキャンを停止させたくなったらstop()を呼び出す
@@ -96,7 +101,7 @@ scan_and_init() {
 	auto found =
 	    std::find_if(results.cbegin(), results.cend(), [](auto& it) { return it.model == SESAME_MODEL && it.flags.registered; });
 	if (found != results.cend()) {
-		Serial.printf("Using %s (%s)\n", found->uuid.toString().c_str(), model_str(found->model));
+		Serial.printf("Using %s (%s)\n", found->uuid.toString().c_str(), model_str(found->model).c_str());
 		// 最初に見つけた SESAME_MODEL のデバイスに接続する
 		// 本サンプルでは認証用の鍵と見つかったSESAMEの組合せ確認は実施していないので、複数のSESAMEがある環境では接続に失敗することがある
 		if (!client.begin(found->address, found->model)) {
