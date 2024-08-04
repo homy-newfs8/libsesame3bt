@@ -10,7 +10,7 @@ namespace libsesame3bt {
  * @brief Sesame client
  *
  */
-class SesameClient : private core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameClientBackend {
+class SesameClient : private core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameBLEBackend {
  public:
 	enum class state_t { idle, connected, authenticating, active };
 	static constexpr size_t MAX_CMD_TAG_SIZE = Sesame::MAX_HISTORY_TAG_SIZE;

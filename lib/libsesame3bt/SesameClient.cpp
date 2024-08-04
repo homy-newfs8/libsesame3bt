@@ -11,7 +11,7 @@ namespace libsesame3bt {
 
 using SesameClientCore = core::SesameClientCore;
 
-SesameClient::SesameClient() : SesameClientCore(static_cast<SesameClientBackend&>(*this)) {
+SesameClient::SesameClient() : SesameClientCore(static_cast<SesameBLEBackend&>(*this)) {
 	SesameClientCore::set_state_callback([this](auto& core, auto state) { core_state_callback(core, state); });
 	SesameClientCore::set_status_callback([this](auto&, Status status) {
 		if (status_callback)
