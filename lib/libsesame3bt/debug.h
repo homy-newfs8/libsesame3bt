@@ -2,13 +2,14 @@
 
 #if LIBSESAME3BT_DEBUG
 #include <Arduino.h>
-#define DEBUG_PRINTLN(str) \
-	do {                     \
-		Serial.println(str);   \
+#define DEBUG_PRINTLN(...)      \
+	do {                          \
+		Serial.printf(__VA_ARGS__); \
+		Serial.println();           \
 	} while (false)
-#define DEBUG_PRINT(fstr) \
-	do {                    \
-		Serial.print(fstr);   \
+#define DEBUG_PRINT(...)        \
+	do {                          \
+		Serial.printf(__VA_ARGS__); \
 	} while (false)
 #define DEBUG_PRINTF(...)       \
 	do {                          \
@@ -17,10 +18,10 @@
 
 #else
 
-#define DEBUG_PRINTLN(fstr) \
+#define DEBUG_PRINTLN(...) \
 	do {                      \
 	} while (false)
-#define DEBUG_PRINT(fstr) \
+#define DEBUG_PRINT(...) \
 	do {                    \
 	} while (false)
 #define DEBUG_PRINTF(...) \
