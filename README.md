@@ -1,5 +1,5 @@
 # libsesame3bt
-ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME Bot 2 / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
 
 This library is integration of [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core) with [arduino-esp32](https://github.com/espressif/arduino-esp32), [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
 

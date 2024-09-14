@@ -1,5 +1,15 @@
 # Changelog
 
+# [0.18.0] 2024-09-14
+
+- Support SESAME Bot 2
+- Example repeat_scan added
+
+## Breaking changes
+
+- click() (for Bot) parameter changed from string_view to optional<uint8_t>. History TAG support removed.
+
+
 # [0.17.0] 2023-04-28
 
 - Support SESAME Touch / Bike2 / Open Sensor (Tested on Touch only).
