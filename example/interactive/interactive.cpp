@@ -254,7 +254,7 @@ loop() {
 						client.unlock(u8"開錠テスト");
 						break;
 					case 'c':
-						client.click(u8"クリックテスト");
+						client.click();
 						break;
 					case 'r':
 						client.request_status();

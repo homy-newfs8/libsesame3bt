@@ -67,6 +67,8 @@ model_str(Sesame::model_t model) {
 			return "Remote";
 		case Sesame::model_t::remote_nano:
 			return "Remote nano";
+		case Sesame::model_t::sesame_bot_2:
+			return "SESAME Bot 2";
 		default:
 			return "UNKNOWN(" + std::to_string(static_cast<int8_t>(model)) + ")";
 	}
