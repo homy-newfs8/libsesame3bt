@@ -178,6 +178,7 @@ constexpr const char* MENU_STR = R"(
 L) Lock
 U) Unlock
 C) Click
+0～9) Click(N)
 R) Request status
 
 X) Exit
@@ -247,6 +248,18 @@ loop() {
 				Serial.printf("%c", c);
 				c = std::tolower(c);
 				switch (c) {
+					case '0':
+					case '1':
+					case '2':
+					case '3':
+					case '4':
+					case '5':
+					case '6':
+					case '7':
+					case '8':
+					case '9':
+						client.click(c - '0');
+						break;
 					case 'l':
 						client.lock(u8"施錠テスト");
 						break;
