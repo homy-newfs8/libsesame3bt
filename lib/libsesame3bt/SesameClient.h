@@ -29,7 +29,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	SesameClient(const SesameClient&) = delete;
 	SesameClient& operator=(const SesameClient&) = delete;
 	virtual ~SesameClient();
-	bool begin(const BLEAddress& address, Sesame::model_t model);
+	bool begin(const NimBLEAddress& address, Sesame::model_t model);
 	bool connect(int retry = 0);
 	virtual void disconnect() override;
 	void set_connect_timeout_sec(uint8_t timeout) { connect_timeout = timeout; }
@@ -50,7 +50,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	using core::SesameClientCore::unlock;
 
  private:
-	BLEAddress address;
+	NimBLEAddress address;
 	NimBLEClient* blec = nullptr;
 	NimBLERemoteCharacteristic* tx = nullptr;
 	NimBLERemoteCharacteristic* rx = nullptr;
@@ -59,12 +59,12 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	history_callback_t history_callback{};
 	registered_devices_callback_t registered_devices_callback{};
 	state_t state = state_t::idle;
-	uint8_t connect_timeout = 30;
+	uint32_t connect_timeout = 30'000;
 
 	void core_state_callback(core::SesameClientCore& core, core::state_t state);
 	void set_state(state_t state);
 
-	virtual void onDisconnect(NimBLEClient* pClient) override;
+	virtual void onDisconnect(NimBLEClient* pClient, int reason) override;
 	virtual bool write_to_tx(const uint8_t* data, size_t size) override;
 };
 

@@ -1,5 +1,13 @@
 # Changelog
 
+# [0.19.0] 2024-11-03
+
+## Breaking changes
+
+- Dependent library NimBLE-Arduino version bumped to 2.x (under development).
+  To use stable version of NimBLE-Arduino (1.14.x), keep using 0.18.0.
+- The resolution of the scan_duration parameter of `SesameScanner::scan()` and `scan_async()` has been changed to millseconds (aligned to NimBLE-Aruduino API).
+
 # [0.18.0] 2024-09-14
 
 - Support SESAME Bot 2

@@ -120,7 +120,7 @@ setup() {
 
 	// Bluetoothアドレスと機種コードを設定(sesame_3, sesame_4, sesame_bike, sesame_bot, sesame_5, sesame_5_pro を指定可能)
 	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
-	if (!client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
+	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 		Serial.println("Failed to begin");
 		for (;;) {
 			delay(1000);
@@ -252,7 +252,7 @@ loop() {
 		case app_state::pre_click:
 			if (millis() - last_operated > 3000) {
 				Serial.println("Clicking");
-				if (!client.click(u8"クリック:テスト")) {
+				if (!client.click()) {
 					Serial.println("Failed to send click command");
 				}
 				last_operated = millis();

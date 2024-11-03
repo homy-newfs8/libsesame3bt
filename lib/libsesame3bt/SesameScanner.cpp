@@ -11,31 +11,25 @@
 
 namespace libsesame3bt {
 
-// scan_async handler
-void
-scan_completed_handler(NimBLEScanResults results) {
-	SesameScanner::get().scan_completed(results);
-}
-
-void
-SesameScanner::scan_completed(NimBLEScanResults results) {
-	if (handler) {
-		handler(*this, nullptr);
-		handler = nullptr;
-	}
-}
-
 bool
 SesameScanner::scan_async(uint32_t scan_duration, scan_handler_t handler) {
 	this->handler = handler;
 	scanner = NimBLEDevice::getScan();
 	scanner->clearResults();
-	scanner->setAdvertisedDeviceCallbacks(this);
+	scanner->setScanCallbacks(this);
 	scanner->setInterval(1349);
 	scanner->setWindow(449);
 	scanner->setActiveScan(true);
 	scanner->setMaxResults(0);
-	return scanner->start(scan_duration, scan_completed_handler, false);
+	return scanner->start(scan_duration, false);
+}
+
+void
+SesameScanner::onScanEnd(NimBLEScanResults results) {
+	if (handler) {
+		handler(*this, nullptr);
+		handler = nullptr;
+	}
 }
 
 void
@@ -43,12 +37,12 @@ SesameScanner::scan(uint32_t scan_duration, scan_handler_t handler) {
 	this->handler = handler;
 	scanner = NimBLEDevice::getScan();
 	scanner->clearResults();
-	scanner->setAdvertisedDeviceCallbacks(this);
+	scanner->setScanCallbacks(this);
 	scanner->setInterval(1349);
 	scanner->setWindow(449);
 	scanner->setActiveScan(true);
 	scanner->setMaxResults(0);
-	scanner->start(scan_duration, false);
+	scanner->getResults(scan_duration, false);
 	if (this->handler) {
 		this->handler(*this, nullptr);
 		this->handler = nullptr;
@@ -57,7 +51,7 @@ SesameScanner::scan(uint32_t scan_duration, scan_handler_t handler) {
 
 void
 SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
-	if (!adv->isAdvertisingService(BLEUUID(Sesame::SESAME3_SRV_UUID))) {
+	if (!adv->isAdvertisingService(NimBLEUUID(Sesame::SESAME3_SRV_UUID))) {
 		return;
 	}
 	auto addr = adv->getAddress();
@@ -67,7 +61,7 @@ SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
 		DEBUG_PRINTF("%s: Unexpected advertisement/name data, ignored\n", addr.toString().c_str());
 		return;
 	}
-	auto info = SesameInfo(addr, model, flag_byte, BLEUUID{uuid_bin, std::size(uuid_bin), true}, *adv);
+	auto info = SesameInfo(addr, model, flag_byte, NimBLEUUID{uuid_bin, std::size(uuid_bin)}.reverseByteOrder(), *adv);
 	if (handler) {
 		handler(*this, &info);
 	}

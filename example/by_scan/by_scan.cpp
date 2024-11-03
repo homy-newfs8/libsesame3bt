@@ -90,7 +90,7 @@ scan_and_init() {
 	// コールバック中に _scanner.stop() を呼び出すと、そこでスキャンは終了する
 	// スキャン結果には WiFiモジュール2が含まれるが本ライブラリでは対応していない
 	// 非同期スキャンを実行する SesameScanner::scan_async()もある
-	scanner.scan(10, [&results](SesameScanner& _scanner, const SesameInfo* _info) {
+	scanner.scan(10'000, [&results](SesameScanner& _scanner, const SesameInfo* _info) {
 		if (_info) {  // nullptrの検査を実施
 			// 結果をコピーして results vector に格納する
 			Serial.printf("model=%s,addr=%s,UUID=%s,registered=%u\n", model_str(_info->model).c_str(), _info->address.toString().c_str(),
@@ -148,6 +148,7 @@ state_update(SesameClient& client, SesameClient::state_t state) {
 
 void
 setup() {
+	delay(5'000);
 	Serial.begin(115200);
 #ifdef ARDUINO_M5Stick_C
 	pinMode(10, OUTPUT);

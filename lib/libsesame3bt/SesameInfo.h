@@ -11,7 +11,7 @@ class SesameInfo {
 
  public:
 	SesameInfo() = delete;
-	const BLEAddress address;
+	const NimBLEAddress address;
 	const Sesame::model_t model;
 	union flags_t {
 		struct {
@@ -21,14 +21,14 @@ class SesameInfo {
 		std::byte v;
 		flags_t(std::byte _v) : v(_v) {}
 	} const flags;
-	const BLEUUID uuid;
+	const NimBLEUUID uuid;
 	const NimBLEAdvertisedDevice& advertised_device;
 
  private:
-	SesameInfo(const BLEAddress& _address,
+	SesameInfo(const NimBLEAddress& _address,
 	           Sesame::model_t _model,
 	           std::byte flags_byte,
-	           const BLEUUID& _uuid,
+	           const NimBLEUUID& _uuid,
 	           NimBLEAdvertisedDevice& _adv)
 	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertised_device(_adv) {}
 };

@@ -53,7 +53,8 @@ using libsesame3bt::SesameClient;
 // 接続するSesameの数だけ、秘密情報、PK等を用意する
 constexpr const char* const sesame_secret[] = {SESAME0_SECRET, SESAME1_SECRET};
 constexpr const char* const sesame_pk[] = {SESAME0_PK, SESAME1_PK};
-const BLEAddress sesame_address[] = {BLEAddress(SESAME0_ADDRESS, BLE_ADDR_RANDOM), BLEAddress(SESAME1_ADDRESS, BLE_ADDR_RANDOM)};
+const NimBLEAddress sesame_address[] = {NimBLEAddress(SESAME0_ADDRESS, BLE_ADDR_RANDOM),
+                                        NimBLEAddress(SESAME1_ADDRESS, BLE_ADDR_RANDOM)};
 constexpr const Sesame::model_t sesame_model[] = {SESAME0_MODEL, SESAME1_MODEL};
 
 SesameClient clients[std::size(sesame_secret)];

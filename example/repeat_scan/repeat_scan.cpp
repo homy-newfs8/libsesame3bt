@@ -65,7 +65,7 @@ loop() {
 	}
 	scanning = true;
 	Serial.printf("Start scan\n");
-	scanner->scan_async(10, [](SesameScanner& _scanner, const SesameInfo* _info) {
+	scanner->scan_async(10'000, [](SesameScanner& _scanner, const SesameInfo* _info) {
 		if (_info) {  // nullptrの検査を実施
 			// 結果をコピーして results vector に格納する
 			Serial.printf("model=%s,addr=%s,UUID=%s,registered=%u\n", model_str(_info->model).c_str(), _info->address.toString().c_str(),

@@ -72,7 +72,7 @@ SesameClient::disconnect() {
 }
 
 bool
-SesameClient::begin(const BLEAddress& address, Sesame::model_t model) {
+SesameClient::begin(const NimBLEAddress& address, Sesame::model_t model) {
 	this->address = address;
 	return SesameClientCore::begin(model);
 }
@@ -128,7 +128,7 @@ SesameClient::connect(int retry) {
 }
 
 void
-SesameClient::onDisconnect(NimBLEClient* pClient) {
+SesameClient::onDisconnect(NimBLEClient* pClient, int reason) {
 	DEBUG_PRINTLN("Bluetooth disconnected by peer");
 	disconnect();
 }

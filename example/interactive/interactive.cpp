@@ -125,7 +125,8 @@ void
 receive_registered_devices(SesameClient& client, const std::vector<SesameClient::RegisteredDevice> devices) {
 	Serial.printf("%u devices registered:\n", devices.size());
 	for (const auto& dev : devices) {
-		Serial.printf("uuid=%s, os=%s\n", BLEUUID(dev.uuid, sizeof(dev.uuid), true).toString().c_str(), os_str(dev.os_ver));
+		Serial.printf("uuid=%s, os=%s\n", NimBLEUUID(dev.uuid, sizeof(dev.uuid)).reverseByteOrder().toString().c_str(),
+		              os_str(dev.os_ver));
 	}
 }
 
@@ -144,7 +145,7 @@ setup() {
 
 	// Bluetoothアドレスと機種コードを設定
 	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
-	if (!client.begin(BLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
+	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 		Serial.println("Failed to begin");
 		for (;;) {
 			delay(1000);

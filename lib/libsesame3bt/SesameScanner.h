@@ -4,8 +4,7 @@
 
 namespace libsesame3bt {
 
-void scan_completed_handler(NimBLEScanResults);
-class SesameScanner : private NimBLEAdvertisedDeviceCallbacks {
+class SesameScanner : private NimBLEScanCallbacks {
  public:
 	using scan_handler_t = std::function<void(SesameScanner&, const SesameInfo*)>;
 	static SesameScanner& get() {
@@ -27,6 +26,7 @@ class SesameScanner : private NimBLEAdvertisedDeviceCallbacks {
 
 	void scan_completed(NimBLEScanResults results);
 	virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
+	virtual void onScanEnd(NimBLEScanResults results) override;
 
 	SesameScanner() = default;
 	~SesameScanner() = default;
