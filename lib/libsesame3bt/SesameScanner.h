@@ -25,8 +25,8 @@ class SesameScanner : private NimBLEScanCallbacks {
 	scan_handler_t handler{};
 
 	void scan_completed(NimBLEScanResults results);
-	virtual void onResult(NimBLEAdvertisedDevice* advertisedDevice) override;
-	virtual void onScanEnd(NimBLEScanResults results) override;
+	virtual void onResult(const NimBLEAdvertisedDevice* advertisedDevice) override;
+	virtual void onScanEnd(const NimBLEScanResults& results, int reason) override;
 
 	SesameScanner() = default;
 	~SesameScanner() = default;

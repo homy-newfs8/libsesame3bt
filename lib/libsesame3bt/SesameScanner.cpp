@@ -25,7 +25,7 @@ SesameScanner::scan_async(uint32_t scan_duration, scan_handler_t handler) {
 }
 
 void
-SesameScanner::onScanEnd(NimBLEScanResults results) {
+SesameScanner::onScanEnd(const NimBLEScanResults& results, int reason) {
 	if (handler) {
 		handler(*this, nullptr);
 		handler = nullptr;
@@ -50,7 +50,7 @@ SesameScanner::scan(uint32_t scan_duration, scan_handler_t handler) {
 }
 
 void
-SesameScanner::onResult(NimBLEAdvertisedDevice* adv) {
+SesameScanner::onResult(const NimBLEAdvertisedDevice* adv) {
 	if (!adv->isAdvertisingService(NimBLEUUID(Sesame::SESAME3_SRV_UUID))) {
 		return;
 	}

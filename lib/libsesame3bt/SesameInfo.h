@@ -29,7 +29,7 @@ class SesameInfo {
 	           Sesame::model_t _model,
 	           std::byte flags_byte,
 	           const NimBLEUUID& _uuid,
-	           NimBLEAdvertisedDevice& _adv)
+	           const NimBLEAdvertisedDevice& _adv)
 	    : address(_address), model(_model), flags(flags_byte), uuid(_uuid), advertised_device(_adv) {}
 };
 

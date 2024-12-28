@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.20.0] 2024-11-28
+
+- Dependent library NimBLE-Arduino version bumped to 2.1.2 (released version).
+
 # [0.19.0] 2024-11-03
 
 ## Breaking changes
