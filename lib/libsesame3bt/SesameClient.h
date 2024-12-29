@@ -32,7 +32,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	bool begin(const NimBLEAddress& address, Sesame::model_t model);
 	bool connect(int retry = 0);
 	virtual void disconnect() override;
-	void set_connect_timeout_sec(uint8_t timeout) { connect_timeout = timeout; }
+	void set_connect_timeout(uint32_t timeout) { connect_timeout = timeout; }
 	void set_status_callback(status_callback_t callback) { status_callback = callback; }
 	void set_state_callback(state_callback_t callback) { state_callback = callback; }
 	void set_history_callback(history_callback_t callback) { history_callback = callback; }

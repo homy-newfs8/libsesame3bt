@@ -1,5 +1,10 @@
 # Changelog
 
+# [0.21.0] 2024-12-29
+
+## Breaking change and bug fix
+- rename `SesameClient::set_connect_timeout_sec()` to `set_connect_timeout()`, and timeout resolution changed from seconds to milliseconds (not properly handled from 0.20.0).
+
 # [0.20.1] 2024-12-29
 
 - bump libsesame3bt-core version to 0.8.0
