@@ -1,5 +1,5 @@
 # libsesame3bt
-ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME Bot 2 / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME Bot 2 / SESAME Touch / SESAME Touch PRO / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
 
 This library is integration of [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core) with [arduino-esp32](https://github.com/espressif/arduino-esp32), [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
 
@@ -61,11 +61,19 @@ void do_unlock_lock() {
 	client.lock(u8"***TAG***");
 }
 ```
+## Touch devices usage
+For SESAME Touch / SESAME Touch PRO devices, you can retrieve battery information with this library. Try with [interactive example](example/interactive/).
+
+Want to handle touch events? [libsesame3bt-server](https://github.com/homy-newfs8/libsesame3bt-server) exists for You!
+
 # Sample App
 * [ESP32Sesame3App](http://github.com/homy-newfs8/ESP32Sesame3App)
 
 # Platform independent library
 * [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core)
+
+# SESAME Touch, Remote, Open Sensor event handling library
+* [libsesame3bt-server](https://github.com/homy-newfs8/libsesame3bt-server)
 
 # Integrate to your Home Automation system without coding
 * ESPHome External Component [esphome-sesame3](https://github.com/homy-newfs8/esphome-sesame3)
