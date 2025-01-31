@@ -39,6 +39,12 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	void set_registered_devices_callback(registered_devices_callback_t callback) { registered_devices_callback = callback; }
 	// warning: oveloading core method
 	state_t get_state() const { return state; }
+	/**
+	 * @brief Get the ble client object
+	 * @details This function may return nullptr when get_state() is `idle`, please check before use.
+	 * @return NimBLEClient*
+	 */
+	NimBLEClient* get_ble_client() const { return blec; }
 	using core::SesameClientCore::click;
 	using core::SesameClientCore::get_model;
 	using core::SesameClientCore::get_setting;

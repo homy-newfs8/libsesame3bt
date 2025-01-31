@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.22.0] 2025-1-31
+- `SesameClient::get_ble_client()` added.
+- Bump Nimble-Arduino version to 2.2.1.
+
 # [0.21.0] 2024-12-29
 
 ## Breaking change and bug fix
