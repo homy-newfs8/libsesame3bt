@@ -88,35 +88,30 @@ os_str(Sesame::os_ver_t os) {
 // Sesameからの通知がある毎に呼び出される(変化がある場合のみ通知されている模様)
 void
 status_update(SesameClient& client, SesameClient::Status status) {
+	// 履歴の読み出し要求(履歴は上がってくる場合こない場合がある)
+	client.request_history();
 	Serial.printf("Status in_lock=%u,in_unlock=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
 	              status.in_lock(), status.in_unlock(), status.target(), status.position(), status.voltage(), status.battery_pct(),
 	              status.battery_critical(), motor_status_str(status.motor_status()));
-	if ((client.get_model() == Sesame::model_t::sesame_bot && status.motor_status() == Sesame::motor_status_t::idle &&
-	     last_status.motor_status() != Sesame::motor_status_t::idle) ||
-	    (client.get_model() != Sesame::model_t::sesame_bot && status.in_lock() != last_status.in_lock())) {
-		// 最新の操作履歴を読み出し可能
-		// 読み出し内容はコールバックで取得する
-		// ここでは初回の状態受信時と、施錠状態の変化時にrequest_history()を呼び出している
-		Serial.println("history requested");
-		client.request_history();
-	}
 	last_status = status;
 }
 
 // 履歴取得コールバック
 // request_history()を実行するとコールバックされる
-// SESAMEから失敗応答があった場合は history.type = Sesame::history_type_t::none となる
+// SESAMEから失敗応答があった場合は history.result != Sesame::reslt_code_t::success となる
 // 応答がない場合等、呼び出されない可能性もある
 void
 receive_history(SesameClient& client, const SesameClient::History& history) {
-	if (history.type == Sesame::history_type_t::none) {
-		Serial.println("Empty history");
+	// resultがsuccessでない場合は履歴は取得できていない(resultにはおおむねnot_foundかbusyが設定されている)
+	if (history.result != Sesame::result_code_t::success) {
 		return;
 	}
 	struct tm tm;
 	gmtime_r(&history.time, &tm);
-	Serial.printf("History type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s\n", static_cast<uint8_t>(history.type),
-	              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec, history.tag_len, history.tag);
+	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
+	Serial.printf("History(%d) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s\n", history.record_id,
+	              static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+	              history.tag_len, history.tag);
 }
 
 // 登録デバイス一覧コールバック
@@ -178,7 +173,8 @@ int count = 0;
 constexpr const char* MENU_STR = R"(
 L) Lock
 U) Unlock
-C) Click
+C) Click(tag)
+D) Click()
 0～9) Click(N)
 R) Request status
 
@@ -268,11 +264,18 @@ loop() {
 						client.unlock(u8"開錠テスト");
 						break;
 					case 'c':
+						client.click(u8"クリックテスト");
+						break;
+					case 'd':
 						client.click();
 						break;
 					case 'r':
 						client.request_status();
 						Serial.println("Status requested");
+						break;
+					case 'h':
+						client.request_history();
+						Serial.println("History requested");
 						break;
 					case 'x':
 						client.disconnect();

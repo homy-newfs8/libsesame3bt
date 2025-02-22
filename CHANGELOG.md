@@ -1,5 +1,14 @@
 # Changelog
 
+# [0.23.0] 2025-02-22
+
+- Bump libsesame3bt-core version to 0.9.0
+- example/interactive modified
+	- request history on every status reported
+	- revert click(tag)
+	- add click() (run default script)
+	- add request history
+
 # [0.22.0] 2025-1-31
 - `SesameClient::get_ble_client()` added.
 - Bump Nimble-Arduino version to 2.2.1.
@@ -90,9 +99,9 @@
 ### Major changes
 
 - SESAME 5 / SESAME 5 PRO support added
-  - Added new values to `Sesame::model_t`
+	- Added new values to `Sesame::model_t`
 - Unified the callback for SESAME Lock and SESAME bot
-  - Removed `SesameClient::set_bot_status_callback()`
+	- Removed `SesameClient::set_bot_status_callback()`
 - Removed retrieve setting APIs from `SesameClient::Status`
 - Added `SesameClient::LockSetting` and `SesameClient::BotSetting`
 - Updated battery remaining percentage calculation table (align to SDK 3.0)
