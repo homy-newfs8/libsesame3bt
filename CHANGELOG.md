@@ -1,5 +1,10 @@
 # Changelog
 
+# [0.24.0] 2025-03-30
+
+- Added `connect_async()` and `start_authenticate()` for asynchronous connections.
+- Modify example/interactive to use asynchronous connection.
+
 # [0.23.0] 2025-02-22
 
 - Bump libsesame3bt-core version to 0.9.0

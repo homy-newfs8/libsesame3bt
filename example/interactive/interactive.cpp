@@ -36,7 +36,6 @@ using libsesame3bt::SesameClient;
 
 SesameClient client;
 SesameClient::Status last_status;
-SesameClient::state_t sesame_state;
 
 static const char*
 motor_status_str(Sesame::motor_status_t status) {
@@ -66,6 +65,10 @@ state_str(SesameClient::state_t state) {
 			return "authenticating";
 		case state_t::connected:
 			return "connected";
+		case state_t::connecting:
+			return "connecting";
+		case state_t::connect_failed:
+			return "connect_failed";
 		default:
 			return "UNKNOWN";
 	}
@@ -152,23 +155,23 @@ setup() {
 		return;
 	}
 	// SesameClient状態コールバックを設定
-	client.set_state_callback([](auto& client, auto state) {
-		sesame_state = state;
-		Serial.printf("sesame state changed to %s\n", state_str(state));
-	});
+	client.set_state_callback([](auto& client, auto state) { Serial.printf("sesame state changed to %s\n", state_str(state)); });
 	// Sesame状態コールバックを設定
 	client.set_status_callback(status_update);
 	// 履歴受信コールバックを設定
 	client.set_history_callback(receive_history);
 	// 登録デバイス一覧コールバックを設定
 	client.set_registered_devices_callback(receive_registered_devices);
+	// 5秒でタイムアウト
+	client.set_connect_timeout(5'000);
 }
 
-enum class app_state { init, wait_running, running, done };
+enum class app_state { init, wait_connected, wait_running, running, done };
 
-static uint32_t last_operated = 0;
-app_state state = app_state::init;
-int count = 0;
+static uint32_t last_tried;
+static app_state state = app_state::init;
+static bool input_discarded;
+static int try_count = 0;
 
 constexpr const char* MENU_STR = R"(
 L) Lock
@@ -182,23 +185,46 @@ X) Exit
 
 input>>)";
 
-bool input_discarded;
-
 void
 loop() {
 	switch (state) {
 		case app_state::init:
-			if (last_operated == 0 || millis() - last_operated > 3000) {
-				count++;
-				Serial.println("Connecting...");
-				// connectはたまに失敗するようなので3回リトライする
-				if (!client.connect(3)) {
-					Serial.println("Failed to connect, abort");
+			if (last_tried == 0 || millis() - last_tried > 500) {
+				if (try_count > 4) {
+					Serial.println("Giving up");
 					state = app_state::done;
 					return;
 				}
-				last_operated = millis();
-				state = app_state::wait_running;
+				try_count++;
+				Serial.println("Connecting async...");
+				last_tried = millis();
+				if (!client.connect_async()) {
+					Serial.println("Failed to connect async");
+					state = app_state::init;
+					return;
+				}
+				Serial.println("async_connect retruned");
+				state = app_state::wait_connected;
+			}
+			break;
+		case app_state::wait_connected:
+			if (client.get_state() == SesameClient::state_t::connected) {
+				Serial.println("Connected");
+				last_tried = millis();
+				if (client.start_authenticate()) {
+					Serial.println("Started authenticate");
+					state = app_state::wait_running;
+				} else {
+					Serial.println("Failed to start authenticate");
+					client.disconnect();
+					state = app_state::init;
+					return;
+				}
+			} else if (client.get_state() != SesameClient::state_t::connecting) {
+				Serial.println("Failed to connect");
+				client.disconnect();
+				state = app_state::init;
+				return;
 			}
 			break;
 		case app_state::wait_running:
@@ -224,7 +250,7 @@ loop() {
 				Serial.print(MENU_STR);
 				state = app_state::running;
 				break;
-			} else if (sesame_state == SesameClient::state_t::idle) {
+			} else if (client.get_state() == SesameClient::state_t::idle) {
 				Serial.printf("Disconnected from SESAME");
 				state = app_state::done;
 				break;

@@ -30,7 +30,7 @@ SesameClient::SesameClient() : SesameClientCore(static_cast<SesameBLEBackend&>(*
 
 SesameClient::~SesameClient() {
 	if (blec) {
-		blec->setClientCallbacks(nullptr, true);
+		blec->setClientCallbacks(nullptr, false);
 		NimBLEDevice::deleteClient(blec);
 	}
 }
@@ -74,6 +74,7 @@ SesameClient::disconnect() {
 bool
 SesameClient::begin(const NimBLEAddress& address, Sesame::model_t model) {
 	this->address = address;
+	this->state = state_t::idle;
 	return SesameClientCore::begin(model);
 }
 
@@ -85,6 +86,32 @@ SesameClient::set_state(state_t state) {
 	this->state = state;
 	if (state_callback) {
 		state_callback(*this, this->state);
+	}
+}
+
+/***
+ * @brief Connect to the device asynchronously
+ * @return true if start connecting successfully
+ * @details This function will return immediately, and the connection result will be notified by the state callback.
+ *          If the connection fails, state callback will be called with state_t::connect_failed.
+ *          If the connection is successful, state callback will be called with state_t::connected.
+ * 					To authenticate, call start_authenticate() after the state is state_t::connected.
+ * 					DO NOT CALL start_authenticate() or disconnect() from the state callback, it will cause a deadlock.
+ */
+bool
+SesameClient::connect_async() {
+	if (!blec) {
+		blec = NimBLEDevice::createClient();
+		blec->setClientCallbacks(this, false);
+	}
+	is_async_connect = true;
+	blec->setConnectTimeout(connect_timeout);
+	if (blec->connect(address, true, true)) {
+		set_state(state_t::connecting);
+		return true;
+	} else {
+		DEBUG_PRINTLN("BLE connect async failed");
+		return false;
 	}
 }
 
@@ -106,6 +133,21 @@ SesameClient::connect(int retry) {
 		delay(500);
 	}
 	set_state(state_t::connected);
+	return start_authenticate();
+}
+
+/***
+ * @brief Start authentication
+ * @return true if authentication started successfully
+ * @details Call this function after the state is state_t::connected.
+ * Do not call this function from the state callback, it will cause a deadlock.
+ */
+bool
+SesameClient::start_authenticate() {
+	if (!blec) {
+		DEBUG_PRINTLN("BLE client not initialized (already disconnected?)");
+		return false;
+	}
 	auto srv = blec->getService(Sesame::SESAME3_SRV_UUID);
 	if (srv && (tx = srv->getCharacteristic(Sesame::TxUUID)) && (rx = srv->getCharacteristic(Sesame::RxUUID))) {
 		if (rx->subscribe(
@@ -129,8 +171,28 @@ SesameClient::connect(int retry) {
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient, int reason) {
-	DEBUG_PRINTLN("Bluetooth disconnected by peer");
+	DEBUG_PRINTLN("BT disconnected by peer, rc=%d", reason);
 	disconnect();
+}
+
+void
+SesameClient::onConnect(NimBLEClient* pClient) {
+	if (!is_async_connect) {
+		return;
+	}
+	DEBUG_PRINTLN("BT connected");
+	set_state(state_t::connected);
+}
+
+void
+SesameClient::onConnectFail(NimBLEClient* pClient, int reason) {
+	if (!is_async_connect) {
+		return;
+	}
+	DEBUG_PRINTLN("BT connect failed, rc=%d", reason);
+	blec->setClientCallbacks(nullptr, false);
+	blec->cancelConnect();
+	set_state(state_t::connect_failed);
 }
 
 }  // namespace libsesame3bt

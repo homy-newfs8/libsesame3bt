@@ -12,7 +12,7 @@ namespace libsesame3bt {
  */
 class SesameClient : private core::SesameClientCore, private NimBLEClientCallbacks, private core::SesameBLEBackend {
  public:
-	enum class state_t { idle, connected, authenticating, active };
+	enum class state_t { idle, connected, authenticating, active, connecting, connect_failed };
 	static constexpr size_t MAX_CMD_TAG_SIZE = Sesame::MAX_HISTORY_TAG_SIZE;
 
 	using LockSetting = core::LockSetting;
@@ -31,6 +31,8 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	virtual ~SesameClient();
 	bool begin(const NimBLEAddress& address, Sesame::model_t model);
 	bool connect(int retry = 0);
+	bool connect_async();
+	bool start_authenticate();
 	virtual void disconnect() override;
 	void set_connect_timeout(uint32_t timeout) { connect_timeout = timeout; }
 	void set_status_callback(status_callback_t callback) { status_callback = callback; }
@@ -66,11 +68,14 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	registered_devices_callback_t registered_devices_callback{};
 	state_t state = state_t::idle;
 	uint32_t connect_timeout = 30'000;
+	bool is_async_connect;
 
 	void core_state_callback(core::SesameClientCore& core, core::state_t state);
 	void set_state(state_t state);
 
 	virtual void onDisconnect(NimBLEClient* pClient, int reason) override;
+	virtual void onConnect(NimBLEClient* pClient) override;
+	virtual void onConnectFail(NimBLEClient* pClient, int reason) override;
 	virtual bool write_to_tx(const uint8_t* data, size_t size) override;
 };
 
