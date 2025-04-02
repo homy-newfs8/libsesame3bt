@@ -93,10 +93,11 @@ SesameClient::set_state(state_t state) {
  * @brief Connect to the device asynchronously
  * @return true if start connecting successfully
  * @details This function will return immediately, and the connection result will be notified by the state callback.
- *          If the connection fails, state callback will be called with state_t::connect_failed.
- *          If the connection is successful, state callback will be called with state_t::connected.
- * 					To authenticate, call start_authenticate() after the state is state_t::connected.
- * 					DO NOT CALL start_authenticate() or disconnect() from the state callback, it will cause a deadlock.
+ * If the connection fails, state callback will be called with state_t::connect_failed.
+ * If the connection is successful, state callback will be called with state_t::connected.
+ * To authenticate, call start_authenticate() after the state is state_t::connected.
+ * DO NOT CALL start_authenticate() or disconnect() from the state callback, it will cause a deadlock.
+ * Do not call while other connection is in progress.
  */
 bool
 SesameClient::connect_async() {
@@ -110,7 +111,7 @@ SesameClient::connect_async() {
 		set_state(state_t::connecting);
 		return true;
 	} else {
-		DEBUG_PRINTLN("BLE connect async failed");
+		DEBUG_PRINTLN("BLE connect async failed rc=%d", blec->getLastError());
 		return false;
 	}
 }
@@ -127,7 +128,7 @@ SesameClient::connect(int retry) {
 			break;
 		}
 		if (retry <= 0 || t >= retry) {
-			DEBUG_PRINTF("BLE connect failed (retry=%d)\n", retry);
+			DEBUG_PRINTF("BLE connect failed rc=%d (retry=%d)\n", blec->getLastError(), retry);
 			return false;
 		}
 		delay(500);
@@ -160,10 +161,10 @@ SesameClient::start_authenticate() {
 		        true)) {
 			return true;
 		} else {
-			DEBUG_PRINTLN("Failed to subscribe RX char");
+			DEBUG_PRINTLN("Failed to subscribe RX char, rc=%d", blec->getLastError());
 		}
 	} else {
-		DEBUG_PRINTLN("The device does not have TX or RX chars");
+		DEBUG_PRINTLN("The device does not have TX or RX chars, rc=%d", blec->getLastError());
 	}
 	disconnect();
 	return false;
