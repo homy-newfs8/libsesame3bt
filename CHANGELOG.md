@@ -1,9 +1,18 @@
 # Changelog
 
-# [0.24.0] 2025-03-30
+# [0.24.0] 2025-04-05
+## Important changes
+- `disconnect()` is no longer called automatically (from a callback) when disconnected by a peer, because it was also calling NimBLE::disconnected() from the callback, which made it unstable.
+  - After you detect a disconnection, call `disconnect()` from outside the callback. You can detect the disconnection by checking the `get_state()` value.
 
-- Added `connect_async()` and `start_authenticate()` for asynchronous connections.
-- Modify example/interactive to use asynchronous connection.
+## Feature added
+- Added the function `connect_async()` and `start_authenticate()` to connect asynchronously.
+- `SesameClient::state_t` symbols added for async connection state detection.
+- See example/interactive for connecting asynchronously.
+
+## Others
+
+- Bump NimBLE-Arduino version to 2.2.3
 
 # [0.23.0] 2025-02-22
 
