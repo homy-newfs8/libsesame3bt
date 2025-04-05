@@ -66,7 +66,9 @@ SesameClient::disconnect() {
 	}
 	// prevent disconnect callback loop
 	blec->setClientCallbacks(nullptr, false);
-	NimBLEDevice::deleteClient(blec);
+	if (!NimBLEDevice::deleteClient(blec)) {
+		DEBUG_PRINTLN("Failed to delete NimBLE client");
+	}
 	blec = nullptr;
 	on_disconnected();
 }
@@ -103,6 +105,10 @@ bool
 SesameClient::connect_async() {
 	if (!blec) {
 		blec = NimBLEDevice::createClient();
+		if (!blec) {
+			DEBUG_PRINTLN("Failed to create BLE client");
+			return false;
+		}
 		blec->setClientCallbacks(this, false);
 	}
 	is_async_connect = true;
@@ -166,14 +172,13 @@ SesameClient::start_authenticate() {
 	} else {
 		DEBUG_PRINTLN("The device does not have TX or RX chars, rc=%d", blec->getLastError());
 	}
-	disconnect();
 	return false;
 }
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient, int reason) {
 	DEBUG_PRINTLN("BT disconnected by peer, rc=%d", reason);
-	disconnect();
+	on_disconnected();
 }
 
 void
@@ -192,7 +197,6 @@ SesameClient::onConnectFail(NimBLEClient* pClient, int reason) {
 	}
 	DEBUG_PRINTLN("BT connect failed, rc=%d", reason);
 	blec->setClientCallbacks(nullptr, false);
-	blec->cancelConnect();
 	set_state(state_t::connect_failed);
 }
 
