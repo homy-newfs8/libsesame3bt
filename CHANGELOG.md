@@ -1,5 +1,9 @@
 # Changelog
 
+# [0.24.1] 2025-05-10
+- Disable automatic exchangeMTU on connect (Caused connection instability on vanilla ESP32).
+  (Later version of this library may handle MTU exchange properly.)
+
 # [0.24.0] 2025-04-05
 ## Important changes
 - `disconnect()` is no longer called automatically (from a callback) when disconnected by a peer, because it was also calling NimBLE::disconnected() from the callback, which made it unstable.

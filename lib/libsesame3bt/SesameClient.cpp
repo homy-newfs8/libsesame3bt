@@ -113,7 +113,7 @@ SesameClient::connect_async() {
 	}
 	is_async_connect = true;
 	blec->setConnectTimeout(connect_timeout);
-	if (blec->connect(address, true, true)) {
+	if (blec->connect(address, true, true, false)) {
 		set_state(state_t::connecting);
 		return true;
 	} else {
@@ -130,7 +130,7 @@ SesameClient::connect(int retry) {
 	}
 	blec->setConnectTimeout(connect_timeout);
 	for (int t = 0; t < 100; t++) {
-		if (blec->connect(address)) {
+		if (blec->connect(address, true, false, false)) {
 			break;
 		}
 		if (retry <= 0 || t >= retry) {
