@@ -1,5 +1,8 @@
 # Changelog
 
+# [0.24.2] 2025-05-31
+- Bump libsesame3bt-core version to v0.10.0
+
 # [0.24.1] 2025-05-10
 - Disable automatic exchangeMTU on connect (Caused connection instability on vanilla ESP32).
   (Later version of this library may handle MTU exchange properly.)
