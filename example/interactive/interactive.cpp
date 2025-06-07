@@ -112,9 +112,10 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	struct tm tm;
 	gmtime_r(&history.time, &tm);
 	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
-	Serial.printf("History(%d) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s\n", history.record_id,
+	Serial.printf("History(%d) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
 	              static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-	              history.tag_len, history.tag);
+	              history.tag_len, history.tag,
+	              history.trigger_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.trigger_type)).c_str() : "none");
 }
 
 // 登録デバイス一覧コールバック

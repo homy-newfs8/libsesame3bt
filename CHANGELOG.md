@@ -3,6 +3,13 @@
 # [0.25.0] 2025-XX-XX
 - Support SESAME Face / SESAME Face Pro
 
+## Important changes
+- SESAME history specification has changed (May 2025). `struct History` has been modified to handle the new spec history in the history callback.
+	- Added `trigger_type` member.
+	- Maximum tag string length increased to 32 (Hexstring of UUID).
+	- If `trigger_type` has a value, the `tag` string will be a UUID (128-bit) hex string.
+- The tag parameter handling in `lock()`/`unlock()`/`click()` is unchanged. Specified string is passed to SESAME as is.
+
 # [0.24.2] 2025-05-31
 - Bump libsesame3bt-core version to v0.10.0
 
