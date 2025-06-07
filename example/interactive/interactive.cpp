@@ -180,6 +180,7 @@ C) Click(tag)
 D) Click()
 0～9) Click(N)
 R) Request status
+H) Request history
 
 X) Exit
 

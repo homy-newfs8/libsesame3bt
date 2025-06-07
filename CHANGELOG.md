@@ -1,5 +1,8 @@
 # Changelog
 
+# [0.25.0] 2025-XX-XX
+- Support SESAME Face / SESAME Face Pro
+
 # [0.24.2] 2025-05-31
 - Bump libsesame3bt-core version to v0.10.0
 
