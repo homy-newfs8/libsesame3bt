@@ -1,6 +1,6 @@
 # Changelog
 
-# [0.25.0] 2025-XX-XX
+# [0.25.0] 2025-06-08
 - Support SESAME Face / SESAME Face Pro
 
 ## Important changes
