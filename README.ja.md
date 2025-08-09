@@ -1,8 +1,8 @@
 # libsesame3bt
-SESAME 5(PRO)/3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ライブラリ
+SESAME 5(PRO)/3/4/bot/サイクルをBluetooth経由で制御するためのESP32用ライブラリ。SESAME Face(PRO) / SESAME Touch(PRO) / CANDY HOUSE Remote のバッテリー残量も取得可能です。
 
 ## 概要
-このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 5、SESAME 5 PRO、SESAME Bot 2、SESAME 4、SESAME 3、SESAME bot、SESAME サイクルを制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
+このライブラリはESP32マイコンで[CANDY HOUSE](https://jp.candyhouse.co/)社製のスマートロックSESAME 5、SESAME 5 PRO、SESAME Bot 2、SESAME 4、SESAME 3、SESAME bot、SESAME サイクル等を制御するためのライブラリです。Bluetooth LE経由で以下の機能を実行できます。
 
 - SESAMEのスキャン
 - SESAME状態の受信
@@ -13,6 +13,11 @@ SESAME 5(PRO)/3/4/bot/サイクルをBluetooth経由で制御するためのESP3
 - [SESAME 5](https://jp.candyhouse.co/products/sesame5)
 - [SESAME 5 PRO](https://jp.candyhouse.co/products/sesame5-pro)
 - [SESAME Bot 2](https://jp.candyhouse.co/products/sesamebot2)
+- [SESAME Face](https://jp.candyhouse.co/products/sesame-face)
+- [SESAME Face PRO](https://jp.candyhouse.co/products/sesame-face-pro)
+- [SESAME Touch](https://jp.candyhouse.co/products/sesame-touch)
+- [SESAME Touch PRO](https://jp.candyhouse.co/products/sesame-touch-pro)
+- [CANDY HOUSE Remote](https://jp.candyhouse.co/products/candyhouse_remote)
 - [SESAME bot](https://jp.candyhouse.co/products/sesame3-bot)
 - [SESAME 3](https://jp.candyhouse.co/products/sesame3)
 - [SESAME 4](https://jp.candyhouse.co/products/sesame4)
@@ -27,7 +32,7 @@ SESAME 5(PRO)/3/4/bot/サイクルをBluetooth経由で制御するためのESP3
 
 ## 使用方法
 - 本ライブラリは開発環境[PlatformIO](https://platformio.org/)での利用を前提としています。動作に必要となる外部ライブラリ等については[library.json](library.json)に記述してあります。
-- C++17コンパイラの使用が前提となっています。PlatformIO上のESP32向け開発でC++17コンパイラを利用可能にする方法については、`platformio.ini`の`build_flags`と`build_unflags`の`-std`オプションを参照してください。
+- [Arduino Framework](https://github.com/espressif/arduino-esp32) 2.xと3.xに対応しています。コンパイル方法は同梱の[platformio.ini](platformio.ini)を参照願います。
 
 ## 関連リポジトリ
 - [ESP32Sesame3App](https://github.com/homy-newfs8/ESP32Sesame3App)

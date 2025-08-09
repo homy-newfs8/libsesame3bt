@@ -200,7 +200,7 @@ loop() {
 	}
 	if (!unlock_requested) {
 		Serial.println("Unlocking");
-		client.unlock(u8"ラベルは21バイトまたは30バイトに収まるように(勝手に切ります)");
+		client.unlock("ラベルは21バイトまたは30バイトに収まるように(勝手に切ります)");
 		client.disconnect();
 		Serial.println("Disconnected");
 		connected = false;

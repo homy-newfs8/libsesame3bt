@@ -18,8 +18,8 @@
 #if !defined(SESAME_PK)
 // 128文字の16進数でSesameの公開鍵(sesame-qr-reader 結果の Public Key)
 #define SESAME_PK "**REPLACE**"
-// SESAME 5 / SESAME 5 PRO では不要なので以下のように定義する
-// #define SESAME_PK nullptr
+// SESAME 5 / SESAME 5 PRO では不要なので以下のように定義する(nullptrは指定しないこと)
+// #define SESAME_PK ""
 #endif
 #if !defined(SESAME_ADDRESS)
 // 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")
@@ -208,7 +208,7 @@ loop() {
 				Serial.println("Unlocking");
 				// unloc(), lock()ともにコマンドの送信が成功した時点でtrueを返す
 				// 開錠、施錠されたかはstatusコールバックで確認する必要がある
-				if (!client.unlock(u8"開錠:テスト")) {
+				if (!client.unlock("開錠:テスト")) {
 					Serial.println("Failed to send unlock command");
 				}
 				last_operated = millis();
@@ -231,7 +231,7 @@ loop() {
 		case app_state::pre_lock:
 			if (millis() - last_operated > 5000) {
 				Serial.println("Locking");
-				if (!client.lock(u8"施錠:テスト")) {
+				if (!client.lock("施錠:テスト")) {
 					Serial.println("Failed to send lock command");
 				}
 				last_operated = millis();

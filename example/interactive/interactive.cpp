@@ -19,8 +19,8 @@
 #if !defined(SESAME_PK)
 // 128文字の16進数でSesameの公開鍵(sesame-qr-reader 結果の Public Key)
 #define SESAME_PK "**REPLACE**"
-// SESAME OS3の機種では不要なので以下のように定義する
-// #define SESAME_PK nullptr
+// SESAME OS3の機種では不要なので以下のように定義する(nullptrは指定しないこと)
+// #define SESAME_PK ""
 #endif
 #if !defined(SESAME_ADDRESS)
 // 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")
@@ -112,7 +112,7 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	struct tm tm;
 	gmtime_r(&history.time, &tm);
 	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
-	Serial.printf("History(%d) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
+	Serial.printf("History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
 	              static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
 	              history.tag_len, history.tag,
 	              history.trigger_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.trigger_type)).c_str() : "none");
@@ -141,7 +141,7 @@ setup() {
 
 	// Bluetoothは初期化しておくこと
 	BLEDevice::init("");
-
+	Serial.println("BLEDevice initialized");
 	// Bluetoothアドレスと機種コードを設定
 	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
 	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
@@ -150,11 +150,13 @@ setup() {
 			delay(1000);
 		}
 	}
+	Serial.println("SesameClient initialized");
 	// Sesameの鍵情報を設定
-	if (!client.set_keys(SESAME_PK, SESAME_SECRET)) {
+	if (!client.set_keys(SESAME_PK == nullptr ? "" : SESAME_PK, SESAME_SECRET)) {
 		Serial.println("Failed to set keys");
 		return;
 	}
+	Serial.println("Sesame keys set");
 	// SesameClient状態コールバックを設定
 	client.set_state_callback([](auto& client, auto state) { Serial.printf("sesame state changed to %s\n", state_str(state)); });
 	// Sesame状態コールバックを設定
@@ -165,6 +167,7 @@ setup() {
 	client.set_registered_devices_callback(receive_registered_devices);
 	// 5秒でタイムアウト
 	client.set_connect_timeout(5'000);
+	Serial.println("setup completed");
 }
 
 enum class app_state { init, wait_connected, wait_running, running, done };
@@ -286,13 +289,13 @@ loop() {
 						client.click(c - '0');
 						break;
 					case 'l':
-						client.lock(u8"施錠テスト");
+						client.lock("施錠テスト");
 						break;
 					case 'u':
-						client.unlock(u8"開錠テスト");
+						client.unlock("開錠テスト");
 						break;
 					case 'c':
-						client.click(u8"クリックテスト");
+						client.click("クリックテスト");
 						break;
 					case 'd':
 						client.click();

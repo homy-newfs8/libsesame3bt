@@ -1,21 +1,19 @@
 # libsesame3bt
-ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME Bot 2 / SESAME Touch / SESAME Touch PRO / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE
+ESP32 library to control SESAME 5 / SESAME 5 PRO / SESAME Bot 2 / SESAME 4 / SESAME 3 / SESAME bot / SESAME 3 bike (SESAME Cycle) via Bluetooth LE. Also retrieve batterry information from SESAME Face / SESAME Face PRO / SESAME Touch / SESAME Touch PRO / CANDY HOUSE Remote.
 
 This library is integration of [libsesame3bt-core](https://github.com/homy-newfs8/libsesame3bt-core) with [arduino-esp32](https://github.com/espressif/arduino-esp32), [NimBLE-Arduino](https://github.com/h2zero/NimBLE-Arduino).
 
 # Usage
-platformio.ini
+platformio.ini for Arduino Framework 3.x.
 ```ini
 [env]
-platform = espressif32
+platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
 framework = arduino
-lib_deps =
-	https://github.com/homy-newfs8/libsesame3bt#0.25.0
-build_flags =
-	-std=gnu++17
-build_unflags =
-	-std=gnu++11
+lib_deps = https://github.com/homy-newfs8/libsesame3bt#0.26.0
+build_flags = -DCONFIG_MBEDTLS_CMAC_C -DUSE_FRAMEWORK_MBEDTLS_CMAC
 ````
+
+If your are using Arduino Framework 2.x, see [platformio.ini](platformio.ini) for usage.
 
 # Example
 ## Scan
@@ -52,7 +50,7 @@ void do_unlock_lock() {
 	// or specify bluetooth address and model type directory
 	client.begin(BLEAddress{"***your device address***", BLE_ADDR_RANDOM}, Sesame::model_t::sesame_5);
 
-	client.set_keys(nullptr, SESAME_SECRET);
+	client.set_keys("", SESAME_SECRET);
 	client.connect();
 	// Wait for connection and authentication done
 	// See example/by_scan/by_scan.cpp for details
