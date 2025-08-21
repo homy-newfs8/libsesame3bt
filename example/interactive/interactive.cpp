@@ -93,9 +93,9 @@ void
 status_update(SesameClient& client, SesameClient::Status status) {
 	// 履歴の読み出し要求(履歴は上がってくる場合こない場合がある)
 	client.request_history();
-	Serial.printf("Status in_lock=%u,in_unlock=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
-	              status.in_lock(), status.in_unlock(), status.target(), status.position(), status.voltage(), status.battery_pct(),
-	              status.battery_critical(), motor_status_str(status.motor_status()));
+	Serial.printf("Status in_lock=%u,in_unlock=%u,is_crit=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
+	              status.in_lock(), status.in_unlock(), status.is_critical(), status.target(), status.position(), status.voltage(),
+	              status.battery_pct(), status.battery_critical(), motor_status_str(status.motor_status()));
 	last_status = status;
 }
 

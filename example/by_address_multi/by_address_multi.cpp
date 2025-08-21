@@ -83,8 +83,8 @@ setup() {
 		clients[i].set_status_callback([i](auto& client, auto status) {
 			if (status != sesame_status[i]) {
 				// Serial.printf("%u: Setting lock=%d,unlock=%d\n", i, status.lock_position(), status.unlock_position());
-				Serial.printf("%u: Status in_lock=%u,in_unlock=%u,pos=%d,volt=%.2f,volt_crit=%u\n", i, status.in_lock(), status.in_unlock(),
-				              status.position(), status.voltage(), status.battery_critical());
+				Serial.printf("%u: Status in_lock=%u,in_unlock=%u,is_crit=%u,pos=%d,volt=%.2f,volt_crit=%u\n", i, status.in_lock(),
+				              status.in_unlock(), status.is_critical(), status.position(), status.voltage(), status.battery_critical());
 				sesame_status[i] = status;
 			}
 		});

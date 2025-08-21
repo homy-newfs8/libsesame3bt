@@ -74,9 +74,9 @@ is_operable(Sesame::model_t model) {
 // Sesameからの通知がある毎に呼び出される(変化がある場合のみ通知されている模様)
 void
 status_update(SesameClient& client, SesameClient::Status status) {
-	Serial.printf("Status in_lock=%u,in_unlock=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
-	              status.in_lock(), status.in_unlock(), status.target(), status.position(), status.voltage(), status.battery_pct(),
-	              status.battery_critical(), motor_status_str(status.motor_status()));
+	Serial.printf("Status in_lock=%u,in_unlock=%u,is_crit=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
+	              status.in_lock(), status.in_unlock(), status.is_critical(), status.target(), status.position(), status.voltage(),
+	              status.battery_pct(), status.battery_critical(), motor_status_str(status.motor_status()));
 	if ((client.get_model() == Sesame::model_t::sesame_bot && status.motor_status() == Sesame::motor_status_t::idle &&
 	     last_status.motor_status() != Sesame::motor_status_t::idle) ||
 	    (client.get_model() != Sesame::model_t::sesame_bot && status.in_lock() != last_status.in_lock())) {
