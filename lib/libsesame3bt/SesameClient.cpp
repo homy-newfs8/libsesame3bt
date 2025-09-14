@@ -1,5 +1,6 @@
 #include "SesameClient.h"
 #include <Arduino.h>
+#include <libsesame3bt/ServerCore.h>
 #include <cinttypes>
 
 #ifndef LIBSESAME3BT_DEBUG
@@ -80,6 +81,21 @@ SesameClient::begin(const NimBLEAddress& address, Sesame::model_t model) {
 	return SesameClientCore::begin(model);
 }
 
+bool
+SesameClient::begin(const NimBLEUUID& uuid, Sesame::model_t model) {
+	auto os = Sesame::get_os_ver(model);
+	if (os != Sesame::os_ver_t::os3) {
+		DEBUG_PRINTLN("UUID connection is only supported for Sesame 5 and later");
+		return false;
+	}
+	auto b_addr = uuid_to_ble_address(uuid);
+	if (b_addr.isNull()) {
+		DEBUG_PRINTLN("Failed to convert UUID to BLE address");
+		return false;
+	}
+	return begin(b_addr, model);
+}
+
 void
 SesameClient::set_state(state_t state) {
 	if (state == this->state) {
@@ -89,6 +105,22 @@ SesameClient::set_state(state_t state) {
 	if (state_callback) {
 		state_callback(*this, this->state);
 	}
+}
+
+/// @brief Retrieve a BLE address from SESAME UUID (SESAME 5 and later).
+/// @param uuid The SESAME UUID to convert.
+/// @return BLE address. If error occurred, empty NimBLEAddress is returned (test with isNull()).
+NimBLEAddress
+SesameClient::uuid_to_ble_address(const NimBLEUUID& uuid) {
+	if (uuid.bitSize() != 128) {
+		DEBUG_PRINTLN("Invalid UUID size, must be 128 bits");
+		return {};
+	}
+	NimBLEUUID r_uuid{uuid};
+	r_uuid.reverseByteOrder();
+	auto b_addr = libsesame3bt::core::SesameServerCore::uuid_to_ble_address(
+	    *reinterpret_cast<const std::byte(*)[16]>(reinterpret_cast<const std::byte*>(r_uuid.getValue())));
+	return {reinterpret_cast<const uint8_t*>(b_addr.data()), BLE_ADDR_RANDOM};
 }
 
 /***

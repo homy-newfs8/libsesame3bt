@@ -30,6 +30,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	SesameClient& operator=(const SesameClient&) = delete;
 	virtual ~SesameClient();
 	bool begin(const NimBLEAddress& address, Sesame::model_t model);
+	bool begin(const NimBLEUUID& uuid, Sesame::model_t model);
 	bool connect(int retry = 0);
 	bool connect_async();
 	bool start_authenticate();
@@ -47,6 +48,9 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	 * @return NimBLEClient*
 	 */
 	NimBLEClient* get_ble_client() const { return blec; }
+
+	static NimBLEAddress uuid_to_ble_address(const NimBLEUUID& uuid);
+
 	using core::SesameClientCore::click;
 	using core::SesameClientCore::get_model;
 	using core::SesameClientCore::get_setting;
