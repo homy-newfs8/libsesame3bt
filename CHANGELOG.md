@@ -1,48 +1,57 @@
 # Changelog
 
-# [0.27.0] 2025-09-06
+## [0.28.0] 2025-09-15
+- Add SesameClient::begin(const NimBLEUUID&, Sesame::model_t). With SESAME OS3 devices, no need to specify BLE Address
+(BLE Address can be calculated from UUID).
+- Fix Remote, Bot 2 battery voltage (was doubled)
+- Support Bike 2.
+- Support 2025 Aug firmware of Bot 2 / Bike 2 (lock status is supported)
+- Status::motor_status() is only for SESAME bot (not Bot 2 and other devices)
+- Status::stopped() is not meaningful for SESAME 3 / SESAME 4
+
+## [0.27.0] 2025-09-06
 - Add SesameClient::Status::is_critical() (Reflect SESAME 5 is_critical flag)
 
-# [0.26.0] 2025-08-09
+## [0.26.0] 2025-08-09
 - Supports Arduino ESP32 3.x in addition to 2.x.
 - Bump NimBLE Arduino version to 2.3.3
 
-## Note
+### Note
 - SesameClient::set_keys() should not be called with `nullptr` as an argument. Older documentation and example code incorrectly used `nullptr`.
 When using with SESAME5 or later, specify `""` for the pk_str parameter instead.
 
-# [0.25.0] 2025-06-08
+## [0.25.0] 2025-06-08
 - Support SESAME Face / SESAME Face Pro
 
-## Important changes
+### Important changes
 - SESAME history specification has changed (May 2025). `struct History` has been modified to handle the new spec history in the history callback.
 	- Added `trigger_type` member.
 	- Maximum tag string length increased to 32 (Hexstring of UUID).
 	- If `trigger_type` has a value, the `tag` string will be a UUID (128-bit) hex string.
 - The tag parameter handling in `lock()`/`unlock()`/`click()` is unchanged. Specified string is passed to SESAME as is.
 
-# [0.24.2] 2025-05-31
+## [0.24.2] 2025-05-31
 - Bump libsesame3bt-core version to v0.10.0
 
-# [0.24.1] 2025-05-10
+## [0.24.1] 2025-05-10
 - Disable automatic exchangeMTU on connect (Caused connection instability on vanilla ESP32).
   (Later version of this library may handle MTU exchange properly.)
 
-# [0.24.0] 2025-04-05
-## Important changes
+## [0.24.0] 2025-04-05
+### Important changes
 - `disconnect()` is no longer called automatically (from a callback) when disconnected by a peer, because it was also calling NimBLE::disconnected() from the callback, which made it unstable.
   - After you detect a disconnection, call `disconnect()` from outside the callback. You can detect the disconnection by checking the `get_state()` value.
 
-## Feature added
+### Feature added
 - Added the function `connect_async()` and `start_authenticate()` to connect asynchronously.
 - `SesameClient::state_t` symbols added for async connection state detection.
 - See example/interactive for connecting asynchronously.
 
-## Others
+### Others
 
 - Bump NimBLE-Arduino version to 2.2.3
 
-# [0.23.0] 2025-02-22
+## [0.23.0] 2025-02-22
 
 - Bump libsesame3bt-core version to 0.9.0
 - example/interactive modified
@@ -51,67 +60,67 @@ When using with SESAME5 or later, specify `""` for the pk_str parameter instead.
 	- add click() (run default script)
 	- add request history
 
-# [0.22.0] 2025-1-31
+## [0.22.0] 2025-1-31
 - `SesameClient::get_ble_client()` added.
 - Bump Nimble-Arduino version to 2.2.1.
 
-# [0.21.0] 2024-12-29
+## [0.21.0] 2024-12-29
 
-## Breaking change and bug fix
+### Breaking change and bug fix
 - rename `SesameClient::set_connect_timeout_sec()` to `set_connect_timeout()`, and timeout resolution changed from seconds to milliseconds (not properly handled from 0.20.0).
 
-# [0.20.1] 2024-12-29
+## [0.20.1] 2024-12-29
 
 - bump libsesame3bt-core version to 0.8.0
 
-# [0.20.0] 2024-12-28
+## [0.20.0] 2024-12-28
 
 - Dependent library NimBLE-Arduino version bumped to 2.1.2 (released version).
 
-# [0.19.0] 2024-11-03
+## [0.19.0] 2024-11-03
 
-## Breaking changes
+### Breaking changes
 
 - Dependent library NimBLE-Arduino version bumped to 2.x (under development).
   To use stable version of NimBLE-Arduino (1.14.x), keep using 0.18.0.
 - The resolution of the scan_duration parameter of `SesameScanner::scan()` and `scan_async()` has been changed to millseconds (aligned to NimBLE-Aruduino API).
 
-# [0.18.0] 2024-09-14
+## [0.18.0] 2024-09-14
 
 - Support SESAME Bot 2
 - Example repeat_scan added
 
-## Breaking changes
+### Breaking changes
 
 - click() (for Bot) parameter changed from string_view to optional<uint8_t>. History TAG support removed.
 
 
-# [0.17.0] 2023-04-28
+## [0.17.0] 2023-04-28
 
 - Support SESAME Touch / Bike2 / Open Sensor (Tested on Touch only).
 - Add `request_status()` (handled on some devices: SESAME 5 seems not handle).
 - Add interactive example.
 
-# [0.16.0] 2023-04-01
+## [0.16.0] 2023-04-01
 
 - Update libsesame3bt-core (v0.5.0)
 
-# [0.14.0] 2023-03-24
+## [0.14.0] 2023-03-24
 
 - Update libsesame3bt-core library (v0.3.0)
 - Some interface accept std::string_view instead of const char *, but usage is almost same.
 
-# [0.13.0] 2023-03-23
+## [0.13.0] 2023-03-23
 
 - Update libsesame3bt-core library
 
-# [0.12.0] 2023-03-13
+## [0.12.0] 2023-03-13
 
-## Major changes
+### Major changes
 
 - Split platform independent part to `libsesame3-core` library.
 
-# [0.11.0] 2023-09-30
+## [0.11.0] 2023-09-30
 
 ### Major changes
 
@@ -124,7 +133,7 @@ When using with SESAME5 or later, specify `""` for the pk_str parameter instead.
 - Parsing BLE advertisement/name functionality to public static function `SesameScanner::parse_advertisement()`.
 - `lock()`, `unlock()`, `click()` will not crash when nullptr passed.
 
-# [0.10.0] 2023-09-23
+## [0.10.0] 2023-09-23
 
 ### Function added
 

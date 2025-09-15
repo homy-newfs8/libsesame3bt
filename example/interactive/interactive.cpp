@@ -22,8 +22,11 @@
 // SESAME OS3の機種では不要なので以下のように定義する(nullptrは指定しないこと)
 // #define SESAME_PK ""
 #endif
-#if !defined(SESAME_ADDRESS)
-// 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")
+#if !defined(SESAME_ADDRESS) && !defined(SESAME_UUID)
+// 17文字のSesameのBluetoothアドレス (例 "01:23:45:67:89:ab")を指定する
+// SESAME OS3の機種ではUUIDを指定することもできる(UUIDから計算で求めたBluetoothアドレスに接続される)
+// 34文字のUUID (例 "00001800-0000-1000-8000-00805f9b34fb")を指定する
+#define SESAME_UUID "**REPLACE**"
 #define SESAME_ADDRESS "**REPLACE**"
 #endif
 #if !defined(SESAME_MODEL)
@@ -93,9 +96,10 @@ void
 status_update(SesameClient& client, SesameClient::Status status) {
 	// 履歴の読み出し要求(履歴は上がってくる場合こない場合がある)
 	client.request_history();
-	Serial.printf("Status in_lock=%u,in_unlock=%u,is_crit=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,motor_status=%s\n",
-	              status.in_lock(), status.in_unlock(), status.is_critical(), status.target(), status.position(), status.voltage(),
-	              status.battery_pct(), status.battery_critical(), motor_status_str(status.motor_status()));
+	Serial.printf(
+	    "Status in_lock=%u,in_unlock=%u,is_crit=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,is_stop=%s,motor_status=%s\n",
+	    status.in_lock(), status.in_unlock(), status.is_critical(), status.target(), status.position(), status.voltage(),
+	    status.battery_pct(), status.battery_critical(), status.stopped() ? "stop" : "move", motor_status_str(status.motor_status()));
 	last_status = status;
 }
 
@@ -144,7 +148,12 @@ setup() {
 	Serial.println("BLEDevice initialized");
 	// Bluetoothアドレスと機種コードを設定
 	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
+#if defined(SESAME_ADDRESS)
 	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
+#else
+	Serial.printf("Connecting to Address: %s\n", SesameClient::uuid_to_ble_address(NimBLEUUID{SESAME_UUID}).toString().c_str());
+	if (!client.begin(NimBLEUUID{SESAME_UUID}, SESAME_MODEL)) {
+#endif
 		Serial.println("Failed to begin");
 		for (;;) {
 			delay(1000);
