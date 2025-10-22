@@ -1,5 +1,4 @@
 #include "SesameClient.h"
-#include <Arduino.h>
 #include <libsesame3bt/ServerCore.h>
 #include <cinttypes>
 
@@ -169,7 +168,6 @@ SesameClient::connect(int retry) {
 			DEBUG_PRINTF("BLE connect failed rc=%d (retry=%d)\n", blec->getLastError(), retry);
 			return false;
 		}
-		delay(500);
 	}
 	set_state(state_t::connected);
 	return start_authenticate();

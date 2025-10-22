@@ -1,5 +1,4 @@
 #include "SesameScanner.h"
-#include <Arduino.h>
 #include <NimBLEDevice.h>
 #include <Sesame.h>
 #include <libsesame3bt/ScannerCore.h>
