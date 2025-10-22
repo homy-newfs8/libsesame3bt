@@ -97,9 +97,12 @@ status_update(SesameClient& client, SesameClient::Status status) {
 	// 履歴の読み出し要求(履歴は上がってくる場合こない場合がある)
 	client.request_history();
 	Serial.printf(
-	    "Status in_lock=%u,in_unlock=%u,is_crit=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,is_stop=%s,motor_status=%s\n",
-	    status.in_lock(), status.in_unlock(), status.is_critical(), status.target(), status.position(), status.voltage(),
-	    status.battery_pct(), status.battery_critical(), status.stopped() ? "stop" : "move", motor_status_str(status.motor_status()));
+	    "Status "
+	    "in_lock=%u,in_unlock=%u,is_crit=%u,clutch_fail=%u,tgt=%d,pos=%d,volt=%.2f,batt_pct=%.2f,batt_crit=%u,is_stop=%s,motor_"
+	    "status=%s\n",
+	    status.in_lock(), status.in_unlock(), status.is_critical(), status.is_clutch_failed(), status.target(), status.position(),
+	    status.voltage(), status.battery_pct(), status.battery_critical(), status.stopped() ? "stop" : "move",
+	    motor_status_str(status.motor_status()));
 	last_status = status;
 }
 
@@ -144,10 +147,17 @@ setup() {
 	Serial.println("setup started");
 
 	// Bluetoothは初期化しておくこと
-	BLEDevice::init("");
+	// 通常はクライアント側のBLEアドレス指定は不要。NimBLEDevice::init()の呼び出しのみでよい。
+	// esphome-seesame_serverに接続する場合は明示的にランダムアドレスを指定する必要がある
+	if (!NimBLEDevice::init("") || !NimBLEDevice::setOwnAddrType(BLE_OWN_ADDR_RANDOM) ||
+	    !NimBLEDevice::setOwnAddr(NimBLEAddress{"ff:32:04:22:65:ff", BLE_ADDR_RANDOM})) {
+		Serial.println("Failed to set own address");
+		return;
+	}
 	Serial.println("BLEDevice initialized");
-	// Bluetoothアドレスと機種コードを設定
-	// Bluetoothアドレスは必ずBLE_ADDR_RANDOMを指定すること
+
+	// SESAME OS3機種ならばUUID指定で接続可能
+	// Bluetoothアドレス指定の場合は必ずBLE_ADDR_RANDOMを指定すること
 #if defined(SESAME_ADDRESS)
 	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 #else
@@ -161,6 +171,7 @@ setup() {
 	}
 	Serial.println("SesameClient initialized");
 	// Sesameの鍵情報を設定
+	// SESAME OS3機種では公開鍵は不要だがnullptrを指定しないこと
 	if (!client.set_keys(SESAME_PK == nullptr ? "" : SESAME_PK, SESAME_SECRET)) {
 		Serial.println("Failed to set keys");
 		return;
