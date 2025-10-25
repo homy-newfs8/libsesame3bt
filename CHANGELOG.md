@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.29.0] 2025-10-25
+- add `is_clutch_failed()` to Status.
+- Bump libsesame3bt-core version to v0.15.0.
+- Remove needless on connect retry.
+
 ## [0.28.0] 2025-09-15
 - Add SesameClient::begin(const NimBLEUUID&, Sesame::model_t). With SESAME OS3 devices, no need to specify BLE Address
 (BLE Address can be calculated from UUID).

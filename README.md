@@ -9,7 +9,7 @@ platformio.ini for Arduino Framework 3.x.
 [env]
 platform = https://github.com/pioarduino/platform-espressif32/releases/download/stable/platform-espressif32.zip
 framework = arduino
-lib_deps = https://github.com/homy-newfs8/libsesame3bt#0.28.0
+lib_deps = https://github.com/homy-newfs8/libsesame3bt#0.29.0
 build_flags = -DCONFIG_MBEDTLS_CMAC_C -DUSE_FRAMEWORK_MBEDTLS_CMAC
 ````
 
