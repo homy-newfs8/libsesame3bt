@@ -134,6 +134,10 @@ SesameClient::uuid_to_ble_address(const NimBLEUUID& uuid) {
  */
 bool
 SesameClient::connect_async() {
+	if (!is_key_set()) {
+		DEBUG_PRINTLN("Keys are not set");
+		return false;
+	}
 	if (!blec) {
 		blec = NimBLEDevice::createClient();
 		if (!blec) {
@@ -155,6 +159,10 @@ SesameClient::connect_async() {
 
 bool
 SesameClient::connect(int retry) {
+	if (!is_key_set()) {
+		DEBUG_PRINTLN("Keys are not set, cannot connect");
+		return false;
+	}
 	if (!blec) {
 		blec = NimBLEDevice::createClient();
 		blec->setClientCallbacks(this, false);
