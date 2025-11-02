@@ -48,6 +48,8 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	 * @return NimBLEClient*
 	 */
 	NimBLEClient* get_ble_client() const { return blec; }
+	bool unlock(history_tag_type_t type, const NimBLEUUID& uuid);
+	bool lock(history_tag_type_t type, const NimBLEUUID& uuid);
 
 	static NimBLEAddress uuid_to_ble_address(const NimBLEUUID& uuid);
 

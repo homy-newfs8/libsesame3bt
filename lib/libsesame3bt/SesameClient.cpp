@@ -238,4 +238,28 @@ SesameClient::onConnectFail(NimBLEClient* pClient, int reason) {
 	set_state(state_t::connect_failed);
 }
 
+bool
+SesameClient::unlock(history_tag_type_t type, const NimBLEUUID& uuid) {
+	if (uuid.bitSize() != 128) {
+		DEBUG_PRINTLN("Invalid UUID size, must be 128 bits");
+		return false;
+	}
+	std::array<std::byte, HISTORY_TAG_UUID_SIZE> tag_uuid{};
+	const uint8_t* data = uuid.getValue();
+	std::reverse_copy(data, data + 16, reinterpret_cast<uint8_t*>(tag_uuid.data()));
+	return SesameClientCore::unlock(type, tag_uuid);
+}
+
+bool
+SesameClient::lock(history_tag_type_t type, const NimBLEUUID& uuid) {
+	if (uuid.bitSize() != 128) {
+		DEBUG_PRINTLN("Invalid UUID size, must be 128 bits");
+		return false;
+	}
+	std::array<std::byte, HISTORY_TAG_UUID_SIZE> tag_uuid{};
+	const uint8_t* data = uuid.getValue();
+	std::reverse_copy(data, data + 16, reinterpret_cast<uint8_t*>(tag_uuid.data()));
+	return SesameClientCore::lock(type, tag_uuid);
+}
+
 }  // namespace libsesame3bt

@@ -33,7 +33,20 @@
 // 使用するSESAMEのモデル (sesame_3, sesame_4, sesame_bike, sesame_bot, sesame_5, sesame_5_pro, sesame_bike_2, sesame_touch, sesame_touch_pro, open_sensor_1)
 #define SESAME_MODEL Sesame::model_t::sesame_3
 #endif
+// TAGにUUIDを使う場合はUSE_UUID_TAGを1に設定し、TAG_UUIDとTAG_TYPEを定義する
+#ifndef USE_UUID_TAG
+#define USE_UUID_TAG 0
+#endif
+#if USE_UUID_TAG
+#ifndef TAG_UUID
+#define TAG_UUID "**REPLACE**"
+#endif
+#ifndef TAG_TYPE
+#define TAG_TYPE libsesame3bt::history_tag_type_t::remote
+#endif
+#endif
 
+using libsesame3bt::history_tag_type_t;
 using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
 
@@ -119,10 +132,11 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	struct tm tm;
 	gmtime_r(&history.time, &tm);
 	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
-	Serial.printf("History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
-	              static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-	              history.tag_len, history.tag,
-	              history.trigger_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.trigger_type)).c_str() : "none");
+	Serial.printf(
+	    "History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
+	    static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
+	    history.tag_len, history.tag,
+	    history.history_tag_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.history_tag_type)).c_str() : "none");
 }
 
 // 登録デバイス一覧コールバック
@@ -199,7 +213,13 @@ static int try_count = 0;
 
 constexpr const char* MENU_STR = R"(
 L) Lock
-U) Unlock
+U) Unlock)"
+#if USE_UUID_TAG
+                                 R"(
+T) Lock(TAG_UUID)
+V) Unlock(TAG_UUID))"
+#endif
+                                 R"(
 C) Click(tag)
 D) Click()
 0～9) Click(N)
@@ -314,6 +334,14 @@ loop() {
 					case 'u':
 						client.unlock("開錠テスト");
 						break;
+#if USE_UUID_TAG
+					case 't':
+						client.lock(TAG_TYPE, NimBLEUUID(TAG_UUID));
+						break;
+					case 'v':
+						client.unlock(TAG_TYPE, NimBLEUUID(TAG_UUID));
+						break;
+#endif
 					case 'c':
 						client.click("クリックテスト");
 						break;
