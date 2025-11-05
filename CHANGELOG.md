@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.30.0] 2025-11-05
+- Add `SesameClient::lock(history_tag_type_t, UUID)` and `unlock`. Enable pretending recent Touch / Face / Remote devices.
+- Add `SesameClient::is_key_set()`.
+- `connect()` / `connect_async()` will fail if not is_key_set.
+
 ## [0.29.0] 2025-10-25
 - add `is_clutch_failed()` to Status.
 - Bump libsesame3bt-core version to v0.15.0.
