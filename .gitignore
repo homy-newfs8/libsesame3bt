@@ -3,3 +3,8 @@
 .vscode/c_cpp_properties.json
 .vscode/launch.json
 .vscode/ipch
+managed_components/
+CMakeLists.txt
+dependencies.lock
+sdkconfig.*
+.dummy/
