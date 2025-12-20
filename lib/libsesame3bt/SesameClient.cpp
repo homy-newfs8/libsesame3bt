@@ -125,7 +125,7 @@ SesameClient::uuid_to_ble_address(const NimBLEUUID& uuid) {
 /***
  * @brief Connect to the device asynchronously
  * @return true if start connecting successfully
- * @details This function will return immediately, and the connection result will be notified by the state callback.
+ * @note This function will return immediately, and the connection result will be notified by the state callback.
  * If the connection fails, state callback will be called with state_t::connect_failed.
  * If the connection is successful, state callback will be called with state_t::connected.
  * To authenticate, call start_authenticate() after the state is state_t::connected.
@@ -184,7 +184,7 @@ SesameClient::connect(int retry) {
 /***
  * @brief Start authentication
  * @return true if authentication started successfully
- * @details Call this function after the state is state_t::connected.
+ * @note Call this function after the state is state_t::connected.
  * Do not call this function from the state callback, it will cause a deadlock.
  */
 bool
