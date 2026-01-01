@@ -133,10 +133,18 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	gmtime_r(&history.time, &tm);
 	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
 	Serial.printf(
-	    "History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, trigger_type=%s\n", history.record_id,
-	    static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec,
-	    history.tag_len, history.tag,
-	    history.history_tag_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.history_tag_type)).c_str() : "none");
+	    "History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, history_tag_type=%s, s_volt=%s, pct=%s, "
+	    "pct(opensensor)=%s\n",
+	    history.record_id, static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min,
+	    tm.tm_sec, history.tag_len, history.tag,
+	    history.history_tag_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.history_tag_type)).c_str() : "none",
+	    isnan(history.scaled_voltage) ? "N/A" : String(history.scaled_voltage, 2).c_str(),
+	    isnan(history.scaled_voltage)
+	        ? "N/A"
+	        : String(SesameClient::Status::scaled_voltage_to_pct(history.scaled_voltage, Sesame::model_t::sesame_5), 2).c_str(),
+	    isnan(history.scaled_voltage)
+	        ? "N/A"
+	        : String(SesameClient::Status::scaled_voltage_to_pct(history.scaled_voltage, Sesame::model_t::open_sensor_1), 2).c_str());
 }
 
 // 登録デバイス一覧コールバック
@@ -175,7 +183,8 @@ setup() {
 #if defined(SESAME_ADDRESS)
 	if (!client.begin(NimBLEAddress{SESAME_ADDRESS, BLE_ADDR_RANDOM}, SESAME_MODEL)) {
 #else
-	Serial.printf("Connecting to Address: %s\n", SesameClient::uuid_to_ble_address(NimBLEUUID{SESAME_UUID}).toString().c_str());
+	Serial.printf("Connecting to Address: %s from UUID %s\n",
+	              SesameClient::uuid_to_ble_address(NimBLEUUID{SESAME_UUID}).toString().c_str(), SESAME_UUID);
 	if (!client.begin(NimBLEUUID{SESAME_UUID}, SESAME_MODEL)) {
 #endif
 		Serial.println("Failed to begin");
