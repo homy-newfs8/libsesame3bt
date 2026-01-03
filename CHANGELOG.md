@@ -1,7 +1,8 @@
 # Changelog
 
-## [0.31.0] 2026-01-XX
-- Add optional model parameter to `Status::voltage_to_pct()`.
+## [0.31.0] 2026-01-03
+- Add optional model parameter to `SesameClient::Status::voltage_to_pct()`.
+- Add some voltage conversion functions to `SesameClient::Status`.
 
 ## [0.30.1] 2025-12-13
 - Do not drop UUID history tag with extra data. Extra data is not handled yet (may be battery voltages).
