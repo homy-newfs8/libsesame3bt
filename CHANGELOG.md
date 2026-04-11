@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.32.0] 2026-04-11
+- Bump NimBLE version for recent platform compatibility.
+- Remove useless const modifier from click()
+- Debug output on ESP-IDF available.
+
 ## [0.31.0] 2026-01-03
 - Add optional model parameter to `SesameClient::Status::voltage_to_pct()`.
 - Add some voltage conversion functions to `SesameClient::Status`.

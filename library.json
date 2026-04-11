@@ -1,6 +1,6 @@
 {
 	"name": "libsesame3bt",
-	"version": "0.31.0",
+	"version": "0.32.0",
 	"description": "Bluetooth LE access library for CANDY HOUSE SESAME 5 / SESAME 5 PRO / SESAME 3 / SESAME 4 / SESAME bot / SESAME bike (SESAME Cycle)",
 	"license": "MIT",
 	"frameworks": [
@@ -23,10 +23,10 @@
 		]
 	},
 	"dependencies": {
-		"libsesame3bt-core": "https://github.com/homy-newfs8/libsesame3bt-core#v0.17.0",
-		"h2zero/NimBLE-Arduino": "~2.3.6"
+		"libsesame3bt-core": "https://github.com/homy-newfs8/libsesame3bt-core#v0.17.1",
+		"h2zero/NimBLE-Arduino": "~2.5.0"
 	},
 	"develop_dependencies": {
-		"h2zero/NimBLE-Arduino": "~2.3.6"
+		"h2zero/NimBLE-Arduino": "~2.5.0"
 	}
 }
