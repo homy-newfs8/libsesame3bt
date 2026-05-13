@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <Sesame.h>
 #include <SesameClient.h>
+#include <libsesame3bt/util.h>
 #include <cctype>
 // Sesame鍵情報設定用インクルードファイル
 // 数行下で SESAME_SECRET 等を直接定義する場合は別ファイルを用意する必要はない
@@ -49,6 +50,7 @@
 using libsesame3bt::history_tag_type_t;
 using libsesame3bt::Sesame;
 using libsesame3bt::SesameClient;
+namespace util = libsesame3bt::core::util;
 
 SesameClient client;
 SesameClient::Status last_status;
@@ -133,18 +135,20 @@ receive_history(SesameClient& client, const SesameClient::History& history) {
 	gmtime_r(&history.time, &tm);
 	// 過去に通知されたものと同じものが通知される場合がある。record_idで重複を検査可能
 	Serial.printf(
-	    "History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, history_tag_type=%s, s_volt=%s, pct=%s, "
-	    "pct(opensensor)=%s\n",
+	    "History(%ld) type=%u, %04d/%02d/%02d %02d:%02d:%02d, tag(%u)=%s, history_tag_type=%s, s_volt=%s, s_volt2=%s, pct=%s, "
+	    "pct(opensensor)=%s, extra=%s\n",
 	    history.record_id, static_cast<uint8_t>(history.type), tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min,
 	    tm.tm_sec, history.tag_len, history.tag,
 	    history.history_tag_type.has_value() ? std::to_string(static_cast<uint8_t>(*history.history_tag_type)).c_str() : "none",
 	    isnan(history.scaled_voltage) ? "N/A" : String(history.scaled_voltage, 2).c_str(),
+	    isnan(history.scaled_voltage2) ? "N/A" : String(history.scaled_voltage2, 2).c_str(),
 	    isnan(history.scaled_voltage)
 	        ? "N/A"
 	        : String(SesameClient::Status::scaled_voltage_to_pct(history.scaled_voltage, Sesame::model_t::sesame_5), 2).c_str(),
 	    isnan(history.scaled_voltage)
 	        ? "N/A"
-	        : String(SesameClient::Status::scaled_voltage_to_pct(history.scaled_voltage, Sesame::model_t::open_sensor_1), 2).c_str());
+	        : String(SesameClient::Status::scaled_voltage_to_pct(history.scaled_voltage, Sesame::model_t::open_sensor_1), 2).c_str(),
+	    history.extra.empty() ? "N/A" : util::bin2hex(history.extra.data(), history.extra.size()).c_str());
 }
 
 // 登録デバイス一覧コールバック

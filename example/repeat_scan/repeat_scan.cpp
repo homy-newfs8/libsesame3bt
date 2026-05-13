@@ -5,45 +5,59 @@ using libsesame3bt::Sesame;
 using libsesame3bt::SesameInfo;
 using libsesame3bt::SesameScanner;
 
+using model_t = Sesame::model_t;
+
 static std::string
 model_str(Sesame::model_t model) {
 	switch (model) {
-		case Sesame::model_t::sesame_3:
+		case model_t::sesame_3:
 			return "SESAME 3";
-		case Sesame::model_t::wifi_2:
+		case model_t::wifi_2:
 			return "Wi-Fi Module 2";
-		case Sesame::model_t::sesame_bot:
+		case model_t::sesame_bot:
 			return "SESAME bot";
-		case Sesame::model_t::sesame_bike:
+		case model_t::sesame_bike:
 			return "SESAME Cycle";
-		case Sesame::model_t::sesame_4:
+		case model_t::sesame_4:
 			return "SESAME 4";
-		case Sesame::model_t::sesame_5:
+		case model_t::sesame_5:
 			return "SESAME 5";
-		case Sesame::model_t::sesame_5_pro:
+		case model_t::sesame_5_pro:
 			return "SESAME 5 PRO";
-		case Sesame::model_t::sesame_touch:
+		case model_t::sesame_touch:
 			return "SESAME TOUCH";
-		case Sesame::model_t::sesame_touch_pro:
+		case model_t::sesame_touch_pro:
 			return "SESAME TOUCH PRO";
-		case Sesame::model_t::sesame_bike_2:
+		case model_t::sesame_bike_2:
 			return "SESAME Cycle 2";
-		case Sesame::model_t::open_sensor_1:
+		case model_t::open_sensor_1:
 			return "Open Sensor";
-		case Sesame::model_t::remote:
+		case model_t::remote:
 			return "Remote";
-		case Sesame::model_t::remote_nano:
+		case model_t::remote_nano:
 			return "Remote nano";
-		case Sesame::model_t::sesame_bot_2:
+		case model_t::sesame_bot_2:
 			return "SESAME Bot 2";
-		case Sesame::model_t::sesame_face:
+		case model_t::sesame_face:
 			return "SESAME Face";
-		case Sesame::model_t::sesame_face_pro:
+		case model_t::sesame_face_pro:
 			return "SESAME Face PRO";
-		case Sesame::model_t::sesame_6:
-			return "SESAME 6";
-		case Sesame::model_t::sesame_6_pro:
+		case model_t::sesame_6_pro:
 			return "SESAME 6 PRO";
+		case model_t::open_sensor_2:
+			return "Open Sensor 2";
+		case model_t::sesame_touch_2:
+			return "SESAME TOUCH 2";
+		case model_t::sesame_touch_2_pro:
+			return "SESAME TOUCH 2 PRO";
+		case model_t::sesame_face_2:
+			return "SESAME Face 2";
+		case model_t::sesame_face_2_pro:
+			return "SESAME Face 2 PRO";
+		case model_t::sesame_face_2_ai:
+			return "SESAME Face 2 AI";
+		case model_t::sesame_face_2_pro_ai:
+			return "SESAME Face 2 PRO AI";
 
 		default:
 			return "UNKNOWN(" + std::to_string(static_cast<int8_t>(model)) + ")";
