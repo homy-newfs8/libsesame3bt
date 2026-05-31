@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.33.0] 2026-05-31
+- API Changes
+  - Add `scaled_voltage2` and `extra` to `History` (Client).
+  - Change return type of `request_status()` to `bool` (was `void`)
+	- Add symbols to `model_t`: `open_sensor_2`, `sesame_touch_2`, `sesame_touch_2_pro`, `sesame_face_2`, `sesame_face_2_pro`, `sesame_face_2_ai`, `sesame_face_2_pro_ai`, `sesame_bot_3`
+
 ## [0.32.0] 2026-04-11
 - Bump NimBLE version for recent platform compatibility.
 - Remove useless const modifier from click()
