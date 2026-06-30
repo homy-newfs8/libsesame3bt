@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.33.1] 2026-06-30
+- Bump libsesame3bt-core version to v0.18.1
+
 ## [0.33.0] 2026-05-31
 - API Changes
   - Add `scaled_voltage2` and `extra` to `History` (Client).
