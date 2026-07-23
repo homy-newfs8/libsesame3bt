@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.33.2] 2026-07-23
+- Bump libsesame3bt-core version to v0.18.2 (sesame_bot_3 support)
+
 ## [0.33.1] 2026-06-30
 - Bump libsesame3bt-core version to v0.18.1
 
