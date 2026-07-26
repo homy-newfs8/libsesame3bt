@@ -1,0 +1,9 @@
+version: "0.33.2"
+dependencies:
+  "h2zero/esp-nimble-cpp":
+    version: "2.5.0"
+    require: public
+  "libsesame3bt-core":
+    version: idftest
+    require: public
+    git: https://github.com/homy-newfs8/libsesame3bt-core.git
