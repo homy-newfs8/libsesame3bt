@@ -14,12 +14,15 @@ using SesameClientCore = core::SesameClientCore;
 SesameClient::SesameClient() : SesameClientCore(static_cast<SesameBLEBackend&>(*this)) {
 	SesameClientCore::set_state_callback([this](auto& core, auto state) { core_state_callback(core, state); });
 	SesameClientCore::set_status_callback([this](auto&, Status status) {
-		if (status_callback)
+		if (status_callback) {
 			status_callback(*this, status);
+		}
 	});
+	// SesameClientCore::set_error_callback([this](auto& core, auto failure) { handle_core_error(failure); });
 	SesameClientCore::set_history_callback([this](auto&, const History& history) {
-		if (history_callback)
+		if (history_callback) {
 			history_callback(*this, history);
+		}
 	});
 	SesameClientCore::set_registered_devices_callback([this](auto&, const auto& devs) {
 		if (registered_devices_callback) {
@@ -59,25 +62,35 @@ SesameClient::write_to_tx(const uint8_t* data, size_t size) {
 	return tx->writeValue(data, size, false);
 }
 
-void
+bool
 SesameClient::disconnect() {
 	if (!blec) {
-		return;
+		return false;
 	}
-	// prevent disconnect callback loop
-	blec->setClientCallbacks(nullptr, false);
-	if (!NimBLEDevice::deleteClient(blec)) {
-		DEBUG_PRINTLN("Failed to delete NimBLE client");
+	if (!blec->isConnected()) {
+		DEBUG_PRINTLN("Already not connected");
+		set_state(state_t::idle);
+		return true;
 	}
-	blec = nullptr;
-	on_disconnected();
+	if (!blec->disconnect()) {
+		DEBUG_PRINTLN("Failed to disconnect rc=%d", blec->getLastError());
+		if (!NimBLEDevice::deleteClient(blec)) {
+			DEBUG_PRINTLN("Failed to delete NimBLE client");
+		}
+		blec = nullptr;
+		on_disconnected();
+		set_state(state_t::idle);
+		return false;
+	}
+	set_state(state_t::disconnecting);
+	return true;
 }
 
 bool
 SesameClient::begin(const NimBLEAddress& address, Sesame::model_t model) {
 	this->address = address;
 	this->state = state_t::idle;
-	return SesameClientCore::begin(model);
+	return SesameClientCore::begin(model) == core::result_t::success;
 }
 
 bool
@@ -126,7 +139,7 @@ SesameClient::uuid_to_ble_address(const NimBLEUUID& uuid) {
  * @brief Connect to the device asynchronously
  * @return true if start connecting successfully
  * @note This function will return immediately, and the connection result will be notified by the state callback.
- * If the connection fails, state callback will be called with state_t::connect_failed.
+ * If the connection fails, state callback will be called with state_t::idle.
  * If the connection is successful, state callback will be called with state_t::connected.
  * To authenticate, call start_authenticate() after the state is state_t::connected.
  * DO NOT CALL start_authenticate() or disconnect() from the state callback, it will cause a deadlock.
@@ -200,7 +213,7 @@ SesameClient::start_authenticate() {
 		        [this](NimBLERemoteCharacteristic* ch, uint8_t* data, size_t size, bool isNotify) {
 			        if (!isNotify || size <= 1)
 				        return;
-			        on_received(reinterpret_cast<std::byte*>(data), size);
+			        accept_result(on_received(reinterpret_cast<std::byte*>(data), size));
 		        },
 		        true)) {
 			return true;
@@ -215,7 +228,8 @@ SesameClient::start_authenticate() {
 
 void
 SesameClient::onDisconnect(NimBLEClient* pClient, int reason) {
-	DEBUG_PRINTLN("BT disconnected by peer, rc=%d", reason);
+	DEBUG_PRINTLN("BT disconnected, reason=%d", reason);
+	set_state(state_t::idle);
 	on_disconnected();
 }
 
@@ -234,8 +248,7 @@ SesameClient::onConnectFail(NimBLEClient* pClient, int reason) {
 		return;
 	}
 	DEBUG_PRINTLN("BT connect failed, rc=%d", reason);
-	blec->setClientCallbacks(nullptr, false);
-	set_state(state_t::connect_failed);
+	set_state(state_t::idle);
 }
 
 bool
@@ -247,7 +260,7 @@ SesameClient::unlock(history_tag_type_t type, const NimBLEUUID& uuid) {
 	std::array<std::byte, HISTORY_TAG_UUID_SIZE> tag_uuid{};
 	const uint8_t* data = uuid.getValue();
 	std::reverse_copy(data, data + 16, reinterpret_cast<uint8_t*>(tag_uuid.data()));
-	return SesameClientCore::unlock(type, tag_uuid);
+	return SesameClientCore::unlock(type, tag_uuid) == core::result_t::success;
 }
 
 bool
@@ -259,7 +272,60 @@ SesameClient::lock(history_tag_type_t type, const NimBLEUUID& uuid) {
 	std::array<std::byte, HISTORY_TAG_UUID_SIZE> tag_uuid{};
 	const uint8_t* data = uuid.getValue();
 	std::reverse_copy(data, data + 16, reinterpret_cast<uint8_t*>(tag_uuid.data()));
-	return SesameClientCore::lock(type, tag_uuid);
+	return SesameClientCore::lock(type, tag_uuid) == core::result_t::success;
 }
+
+#if LIBSESAME3BT_DEBUG
+static const char*
+result_str(core::result_t result) {
+	using result_t = core::result_t;
+	switch (result) {
+		case result_t::auth_failure:
+			return "auth_failure";
+		case result_t::crypt_failure:
+			return "crypt_failure";
+		case result_t::invalid_packet:
+			return "invalid_packet";
+		case result_t::invalid_state:
+			return "invalid_state";
+		case result_t::operation_unsupported:
+			return "operation_unsupported";
+		case result_t::success:
+			return "success";
+		case result_t::transport_failure:
+			return "transport_failure";
+		case result_t::invalid_argument:
+			return "invalid_argument";
+		default:
+			return "UNKNOWN";
+	}
+}
+#endif
+
+#if __cplusplus >= 202002L && LIBSESAME3BT_DEBUG
+bool
+SesameClient::accept_result(core::result_t result, std::source_location location) {
+	last_result = result;
+	if (result != core::result_t::success) {
+		DEBUG_PRINTLN("%s: %s", location.function_name(), result_str(result));
+		if (!disconnect()) {
+			DEBUG_PRINTLN("Failed to disconnect");
+		}
+	}
+	return result == core::result_t::success;
+}
+#else
+bool
+SesameClient::accept_result(core::result_t result) {
+	last_result = result;
+	if (result != core::result_t::success) {
+		DEBUG_PRINTLN("%s: Failure in core", result_str(result));
+		if (!disconnect()) {
+			DEBUG_PRINTLN("Failed to disconnect");
+		}
+	}
+	return result == core::result_t::success;
+}
+#endif
 
 }  // namespace libsesame3bt
