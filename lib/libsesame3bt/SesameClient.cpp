@@ -18,6 +18,11 @@ SesameClient::SesameClient() : SesameClientCore(static_cast<SesameBLEBackend&>(*
 			status_callback(*this, status);
 		}
 	});
+	SesameClientCore::set_setting_callback([this](auto&, const std::variant<LockSetting, BotSetting>& setting) {
+		if (setting_callback) {
+			setting_callback(*this, setting);
+		}
+	});
 	// SesameClientCore::set_error_callback([this](auto& core, auto failure) { handle_core_error(failure); });
 	SesameClientCore::set_history_callback([this](auto&, const History& history) {
 		if (history_callback) {
@@ -305,7 +310,6 @@ result_str(core::result_t result) {
 #if __cplusplus >= 202002L && LIBSESAME3BT_DEBUG
 bool
 SesameClient::accept_result(core::result_t result, std::source_location location) {
-	last_result = result;
 	if (result != core::result_t::success) {
 		DEBUG_PRINTLN("%s: %s", location.function_name(), result_str(result));
 		if (!disconnect()) {

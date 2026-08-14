@@ -26,6 +26,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	using status_callback_t = std::function<void(SesameClient& client, Status status)>;
 	using state_callback_t = std::function<void(SesameClient& client, state_t state)>;
 	using history_callback_t = std::function<void(SesameClient& client, const History& history)>;
+	using setting_callback_t = std::function<void(SesameClient& client, const std::variant<LockSetting, BotSetting>& setting)>;
 	using registered_devices_callback_t = std::function<void(SesameClient& client, const std::vector<RegisteredDevice> devices)>;
 	using result_t = core::result_t;
 
@@ -44,6 +45,7 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	void set_state_callback(state_callback_t callback) { state_callback = callback; }
 	void set_history_callback(history_callback_t callback) { history_callback = callback; }
 	void set_registered_devices_callback(registered_devices_callback_t callback) { registered_devices_callback = callback; }
+	void set_setting_callback(setting_callback_t callback) { setting_callback = callback; }
 	// warning: oveloading core method
 	state_t get_state() const { return state; }
 	/**
@@ -54,7 +56,6 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	NimBLEClient* get_ble_client() const { return blec; }
 	bool unlock(history_tag_type_t type, const NimBLEUUID& uuid);
 	bool lock(history_tag_type_t type, const NimBLEUUID& uuid);
-	result_t get_last_result() const { return last_result; }
 
 	static NimBLEAddress uuid_to_ble_address(const NimBLEUUID& uuid);
 
@@ -62,14 +63,14 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	bool unlock(history_tag_type_t type, const std::array<std::byte, HISTORY_TAG_UUID_SIZE>& uuid) {
 		return accept_result(core::SesameClientCore::unlock(type, uuid));
 	}
-	bool lock(std::string_view tag) { return accept_result(core::SesameClientCore ::lock(tag)); }
+	bool lock(std::string_view tag) { return accept_result(core::SesameClientCore::lock(tag)); }
 	bool lock(history_tag_type_t type, const std::array<std::byte, HISTORY_TAG_UUID_SIZE>& uuid) {
 		return accept_result(core::SesameClientCore::lock(type, uuid));
 	}
-	bool click(std::optional<uint8_t> script_no = std::nullopt) { return accept_result(core::SesameClientCore ::click(script_no)); }
-	bool click(std::string_view tag) { return accept_result(core::SesameClientCore ::click(tag)); }
-	bool request_history() { return accept_result(core::SesameClientCore ::request_history()); }
-	bool request_status() { return accept_result(core::SesameClientCore ::request_status()); }
+	bool click(std::optional<uint8_t> script_no = std::nullopt) { return accept_result(core::SesameClientCore::click(script_no)); }
+	bool click(std::string_view tag) { return accept_result(core::SesameClientCore::click(tag)); }
+	bool request_history() { return accept_result(core::SesameClientCore::request_history()); }
+	bool request_status() { return accept_result(core::SesameClientCore::request_status()); }
 	bool set_keys(const std::array<std::byte, Sesame::PK_SIZE>& public_key,
 	              const std::array<std::byte, Sesame::SECRET_SIZE>& secret_key) {
 		return core::SesameClientCore::set_keys(public_key, secret_key) == core::result_t::success;
@@ -79,7 +80,6 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	}
 
 	using core::SesameClientCore::get_model;
-	using core::SesameClientCore::get_setting;
 	using core::SesameClientCore::is_key_set;
 	using core::SesameClientCore::is_session_active;
 
@@ -92,10 +92,10 @@ class SesameClient : private core::SesameClientCore, private NimBLEClientCallbac
 	state_callback_t state_callback{};
 	history_callback_t history_callback{};
 	registered_devices_callback_t registered_devices_callback{};
+	setting_callback_t setting_callback{};
 	state_t state = state_t::idle;
 	uint32_t connect_timeout = 30'000;
 	bool is_async_connect;
-	result_t last_result;
 
 	void core_state_callback(core::SesameClientCore& core, core::state_t state);
 	void set_state(state_t state);
