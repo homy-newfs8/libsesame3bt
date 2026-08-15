@@ -4,7 +4,7 @@
 	"description": "Bluetooth LE access library for CANDY HOUSE SESAME 5 / SESAME 5 PRO / SESAME 3 / SESAME 4 / SESAME bot / SESAME bike (SESAME Cycle)",
 	"license": "MIT",
 	"frameworks": [
-		"Arduino",
+		"arduino",
 		"espidf"
 	],
 	"platforms": "espressif32",
