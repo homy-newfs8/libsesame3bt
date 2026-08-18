@@ -6,6 +6,9 @@
 	- Properly handle disconnection.
 	  - Add `state_t::disconnecting`. When `disconnect()` initiated. Underlying library clean up will run in this state. Please wait state changed to `idle` for next connection.
 
+## [0.34.0] 2026-08-15
+- Bump libsesame3bt-core version to v0.19.0
+
 ## [0.33.3] 2026-08-08
 - Bump libsesame3bt-core version to v0.18.3 (Bot2/3, Bike2 fix)
 
