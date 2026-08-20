@@ -321,7 +321,6 @@ SesameClient::accept_result(core::result_t result, std::source_location location
 #else
 bool
 SesameClient::accept_result(core::result_t result) {
-	last_result = result;
 	if (result != core::result_t::success) {
 		DEBUG_PRINTLN("%s: Failure in core", result_str(result));
 		if (!disconnect()) {
