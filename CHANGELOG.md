@@ -3,6 +3,8 @@
 ## [0.50.0] 2026-08-XX
 - Major change
   - Remove `state_t::connect_failed`. When connect failed, transit to `idle`.
+	- Remove `get_setting()`. Use `set_setting_callback()` instead.
+	- The state changes to `state_t::active` as soon as authentication is complete. Previously, the state change was deferred until both the status and settings were received.
 	- Properly handle disconnection.
 	  - Add `state_t::disconnecting`. When `disconnect()` initiated. Underlying library clean up will run in this state. Please wait state changed to `idle` for next connection.
 
